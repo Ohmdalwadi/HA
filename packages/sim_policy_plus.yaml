@@ -1,0 +1,564 @@
+# === Simulated House: base modes + WFH + Pet overlays (ALL VIRTUAL) ===
+input_boolean:
+  # Base modes (mutually exclusive)
+  mode_home:   { name: Mode - Home }
+  mode_away:   { name: Mode - Away }
+  mode_sleep:  { name: Mode - Sleep }
+  mode_guest:  { name: Mode - Guest }
+
+  # Overlays (can stack)
+  overlay_wfh:      { name: Overlay - Work From Home }
+  overlay_pet_home: { name: Overlay - Pet (Dog at Home) }
+
+  # Simulated states/devices
+  sim_motion_hall:   { name: Sim Motion - Hall }
+  sim_motion_lounge: { name: Sim Motion - Lounge }
+  sim_motion_bed:    { name: Sim Motion - Bedroom }
+  sim_door_front:    { name: Sim Front Door }
+  sim_doorbell:      { name: Sim Doorbell Press }
+  sim_dog_door:      { name: Sim Dog Door }
+  sim_tv:            { name: Sim TV Plug }
+  sim_kettle:        { name: Sim Kettle Plug }
+  sim_whitenoise:    { name: Sim White Noise Speaker }
+  meeting_now:       { name: WFH - Meeting Now }
+
+  # Policy flags (auto-set by automations)
+  block_fun:       { name: Policy - Block Fun Devices }
+  doorbell_muted:  { name: Policy - Doorbell Muted }
+  do_not_disturb:  { name: Policy - Do Not Disturb }
+
+  # Simulated door locks (moved here to avoid duplicate mapping keys)
+  front_door_sim: { name: "Front Door (Sim)", icon: mdi:door-closed-lock }
+  back_door_sim:  { name: "Back Door (Sim)",  icon: mdi:door-closed-lock }
+
+input_number:
+  # Virtual environment & power sliders
+  sim_temp_lounge:      { name: Lounge Temp, min: 10, max: 35, step: 0.1, unit_of_measurement: "°C" }
+  sim_temp_bed:         { name: Bedroom Temp, min: 10, max: 35, step: 0.1, unit_of_measurement: "°C" }
+  sim_power_tv:         { name: TV Power (W), min: 0, max: 250, step: 5, unit_of_measurement: "W" }
+  sim_power_kettle:     { name: Kettle Power (W), min: 0, max: 2000, step: 10, unit_of_measurement: "W" }
+  sim_power_whitenoise: { name: White Noise Power (W), min: 0, max: 30, step: 1, unit_of_measurement: "W" }
+  bark_level_db:        { name: Dog Bark Level (dB), min: 0, max: 100, step: 1, unit_of_measurement: "dB" }
+  tariff_price:         { name: Tariff ($/kWh), min: 0.00, max: 1.00, step: 0.01 }
+  appliance_timeout_minutes: { name: Appliance Timeout (min), min: 5, max: 60, step: 5 }
+  daily_energy_budget_kwh:   { name: Daily Energy Budget (kWh), min: 0.1, max: 30, step: 0.1 }
+
+  # Pet comfort band
+  pet_temp_min: { name: Pet Temp Min, min: 10, max: 30, step: 0.5, unit_of_measurement: "°C" }
+  pet_temp_max: { name: Pet Temp Max, min: 15, max: 35, step: 0.5, unit_of_measurement: "°C" }
+
+input_datetime:
+  quiet_start: { name: Quiet Start, has_date: false, has_time: true }
+  quiet_end:   { name: Quiet End,   has_date: false, has_time: true }
+
+template:
+  - binary_sensor:
+      - name: Hall Motion
+        device_class: motion
+        state: "{{ is_state('input_boolean.sim_motion_hall','on') }}"
+      - name: Lounge Motion
+        device_class: motion
+        state: "{{ is_state('input_boolean.sim_motion_lounge','on') }}"
+      - name: Bedroom Motion
+        device_class: motion
+        state: "{{ is_state('input_boolean.sim_motion_bed','on') }}"
+      - name: Front Door
+        device_class: door
+        state: "{{ is_state('input_boolean.sim_door_front','on') }}"
+      - name: Dog Door
+        device_class: door
+        state: "{{ is_state('input_boolean.sim_dog_door','on') }}"
+      - name: Dog Barking
+        device_class: sound
+        state: "{{ (states('input_number.bark_level_db')|float) > 60 }}"
+  - sensor:
+      - name: Lounge Temperature
+        unit_of_measurement: "°C"
+        state: "{{ states('input_number.sim_temp_lounge') }}"
+      - name: Bedroom Temperature
+        unit_of_measurement: "°C"
+        state: "{{ states('input_number.sim_temp_bed') }}"
+      - name: TV Power
+        unit_of_measurement: "W"
+        state: "{{ states('input_number.sim_power_tv') }}"
+      - name: Kettle Power
+        unit_of_measurement: "W"
+        state: "{{ states('input_number.sim_power_kettle') }}"
+      - name: White Noise Power
+        unit_of_measurement: "W"
+        state: "{{ states('input_number.sim_power_whitenoise') }}"
+      - name: Bark Level
+        unit_of_measurement: "dB"
+        state: "{{ states('input_number.bark_level_db') }}"
+      - name: House Energy Today
+        unit_of_measurement: "kWh"
+        state: >
+          {% set tv = states('sensor.tv_energy_daily')|float(0) %}
+          {% set kt = states('sensor.kettle_energy_daily')|float(0) %}
+          {% set wn = states('sensor.whitenoise_energy_daily')|float(0) %}
+          {{ (tv + kt + wn) | round(3) }}
+
+# Virtual actuators (template switches)
+switch:
+  - platform: template
+    switches:
+      tv_switch:
+        friendly_name: "TV"
+        value_template: "{{ is_state('input_boolean.sim_tv','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_tv }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_tv, value: 120 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_tv }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_tv, value: 0 }
+      kettle_switch:
+        friendly_name: "Kettle"
+        value_template: "{{ is_state('input_boolean.sim_kettle','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_kettle }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_kettle, value: 1500 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_kettle }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_kettle, value: 0 }
+      whitenoise_switch:
+        friendly_name: "White Noise"
+        value_template: "{{ is_state('input_boolean.sim_whitenoise','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_whitenoise }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_whitenoise, value: 10 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_whitenoise }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_whitenoise, value: 0 }
+
+# Power -> energy integration
+sensor:
+  - platform: integration
+    source: sensor.tv_power
+    name: TV Energy
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.kettle_power
+    name: Kettle Energy
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.white_noise_power
+    name: White Noise Energy
+    unit_prefix: k
+    round: 3
+    method: left
+
+utility_meter:
+  tv_energy_daily:
+    source: sensor.tv_energy
+    cycle: daily
+  kettle_energy_daily:
+    source: sensor.kettle_energy
+    cycle: daily
+  whitenoise_energy_daily:
+    source: sensor.white_noise_energy
+    cycle: daily
+
+# Scenes (virtual ambience)
+scene:
+  - name: Home Bright
+    entities: {}
+  - name: Evening Relax
+    entities: {}
+  - name: Night Minimal
+    entities: {}
+  - name: WFH Focus
+    entities: {}
+  - name: Pet Calm
+    entities: {}
+
+# ====================== AUTOMATIONS ======================
+automation:
+
+# A) Base modes exclusive
+- alias: Mode | Exclusivity
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.mode_home
+        - input_boolean.mode_away
+        - input_boolean.mode_sleep
+        - input_boolean.mode_guest
+  action:
+    - variables: { active: "{{ trigger.entity_id }}" }
+    - choose:
+        - conditions: "{{ is_state(active,'on') }}"
+          sequence:
+            - choose:
+                - conditions: "{{ active.endswith('mode_home') }}"
+                  sequence:
+                    - service: input_boolean.turn_off
+                      target:
+                        entity_id:
+                          - input_boolean.mode_away
+                          - input_boolean.mode_sleep
+                          - input_boolean.mode_guest
+                - conditions: "{{ active.endswith('mode_away') }}"
+                  sequence:
+                    - service: input_boolean.turn_off
+                      target:
+                        entity_id:
+                          - input_boolean.mode_home
+                          - input_boolean.mode_sleep
+                          - input_boolean.mode_guest
+                - conditions: "{{ active.endswith('mode_sleep') }}"
+                  sequence:
+                    - service: input_boolean.turn_off
+                      target:
+                        entity_id:
+                          - input_boolean.mode_home
+                          - input_boolean.mode_away
+                          - input_boolean.mode_guest
+                - conditions: "{{ active.endswith('mode_guest') }}"
+                  sequence:
+                    - service: input_boolean.turn_off
+                      target:
+                        entity_id:
+                          - input_boolean.mode_home
+                          - input_boolean.mode_away
+                          - input_boolean.mode_sleep
+
+# B) Mode orchestrator -> scenes + notifications
+- alias: Mode | Orchestrator
+  mode: single
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.mode_home
+        - input_boolean.mode_away
+        - input_boolean.mode_sleep
+        - input_boolean.mode_guest
+  action:
+    - choose:
+        - conditions: "{{ is_state('input_boolean.mode_home','on') }}"
+          sequence:
+            - service: scene.turn_on
+              target: { entity_id: scene.home_bright }
+            - service: persistent_notification.create
+              data: { title: "Mode: Home", message: "Bright day profile applied." }
+        - conditions: "{{ is_state('input_boolean.mode_guest','on') }}"
+          sequence:
+            - service: scene.turn_on
+              target: { entity_id: scene.evening_relax }
+            - service: persistent_notification.create
+              data: { title: "Mode: Guest", message: "Guest ambience + extended hallway timeouts." }
+        - conditions: "{{ is_state('input_boolean.mode_sleep','on') }}"
+          sequence:
+            - service: scene.turn_on
+              target: { entity_id: scene.night_minimal }
+            - service: persistent_notification.create
+              data: { title: "Mode: Sleep", message: "Night profile; risky loads will auto-off." }
+        - conditions: "{{ is_state('input_boolean.mode_away','on') }}"
+          sequence:
+            - service: persistent_notification.create
+              data: { title: "Mode: Away", message: "House secured; safety and energy policies active." }
+
+# C) Quiet hours -> kettle auto-off after timeout
+- alias: Safety | Quiet Hours Auto-Off (Kettle)
+  mode: restart
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.kettle_power
+      above: 50
+      for:
+        minutes: "{{ states('input_number.appliance_timeout_minutes')|int }}"
+  condition:
+    - condition: template
+      value_template: >
+        {% set s = state_attr('input_datetime.quiet_start','timestamp') %}
+        {% set e = state_attr('input_datetime.quiet_end','timestamp') %}
+        {% set nowts = now().timestamp() %}
+        {{ s and e and (nowts >= s or nowts <= e) }}
+  action:
+    - service: persistent_notification.create
+      data: { title: "Safety", message: "Kettle on too long during quiet hours → turning off." }
+    - service: switch.turn_off
+      target: { entity_id: switch.kettle_switch }
+
+# D) Energy budget -> 80% soft block on "fun" devices
+- alias: Energy | Budget Soft Block
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: sensor.house_energy_today
+  condition:
+    - condition: template
+      value_template: >
+        {% set used = states('sensor.house_energy_today')|float(0) %}
+        {% set cap  = states('input_number.daily_energy_budget_kwh')|float(1) %}
+        {{ used >= (cap * 0.8) and is_state('input_boolean.block_fun','off') }}
+  action:
+    - service: input_boolean.turn_on
+      target: { entity_id: input_boolean.block_fun }
+    - service: persistent_notification.create
+      data: { title: "Energy", message: "You’ve hit 80% of today’s budget. Soft-blocking TV and other fun loads." }
+
+- alias: Energy | Enforce Fun Block
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id: input_boolean.block_fun
+    - platform: state
+      entity_id: switch.tv_switch
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.block_fun
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target: { entity_id: switch.tv_switch }
+    - service: persistent_notification.create
+      data: { title: "Policy", message: "Fun device blocked due to energy policy." }
+
+# E) WFH overlay: focus scene, DND, doorbell mute, breaks, meeting DND
+- alias: WFH | Overlay On
+  trigger:
+    - platform: state
+      entity_id: input_boolean.overlay_wfh
+      to: "on"
+  action:
+    - service: scene.turn_on
+      target: { entity_id: scene.wfh_focus }
+    - service: input_boolean.turn_on
+      target:
+        entity_id:
+          - input_boolean.doorbell_muted
+          - input_boolean.do_not_disturb
+    - service: persistent_notification.create
+      data: { title: "WFH", message: "Focus mode; doorbell muted; DND active." }
+
+- alias: WFH | Overlay Off
+  trigger:
+    - platform: state
+      entity_id: input_boolean.overlay_wfh
+      to: "off"
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id:
+          - input_boolean.doorbell_muted
+          - input_boolean.do_not_disturb
+    - service: persistent_notification.create
+      data: { title: "WFH", message: "WFH overlay off; normal notifications restored." }
+
+- alias: WFH | Doorbell Handler
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sim_doorbell
+      to: "on"
+  action:
+    - choose:
+        - conditions: "{{ is_state('input_boolean.doorbell_muted','on') }}"
+          sequence:
+            - service: persistent_notification.create
+              data: { title: "Doorbell", message: "Doorbell muted (WFH/Pet Calm). Logging only." }
+        - conditions: []
+          sequence:
+            - service: persistent_notification.create
+              data: { title: "Doorbell", message: "Ding-dong! Someone’s at the door." }
+    - delay: "00:00:02"
+    - service: input_boolean.turn_off
+      target: { entity_id: input_boolean.sim_doorbell }
+
+- alias: WFH | Break Reminder
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
+      entity_id: input_boolean.overlay_wfh
+      state: "on"
+  action:
+    - service: persistent_notification.create
+      data: { title: "WFH", message: "Stand, stretch, hydrate. 2-min break." }
+
+- alias: WFH | Meeting DND
+  trigger:
+    - platform: state
+      entity_id: input_boolean.meeting_now
+  action:
+    - choose:
+        - conditions: "{{ is_state('input_boolean.meeting_now','on') and is_state('input_boolean.overlay_wfh','on') }}"
+          sequence:
+            - service: input_boolean.turn_on
+              target: { entity_id: input_boolean.doorbell_muted }
+            - service: persistent_notification.create
+              data: { title: "Meeting", message: "DND reinforced; doorbell muted." }
+        - conditions: []
+          sequence:
+            - service: persistent_notification.create
+              data: { title: "Meeting", message: "Meeting flag cleared." }
+
+# F) Pet overlay: comfort band + bark calming + doorbell calming
+- alias: Pet | Overlay On
+  trigger:
+    - platform: state
+      entity_id: input_boolean.overlay_pet_home
+      to: "on"
+  action:
+    - service: scene.turn_on
+      target: { entity_id: scene.pet_calm }
+    - service: persistent_notification.create
+      data: { title: "Pet Mode", message: "Pet comfort profile active (calm ambience, bark-calming ready)." }
+
+- alias: Pet | Comfort Band Watch
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: sensor.lounge_temperature
+  condition:
+    - condition: state
+      entity_id: input_boolean.overlay_pet_home
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.mode_away
+      state: "on"
+    - condition: template
+      value_template: >
+        {% set t = states('sensor.lounge_temperature')|float(0) %}
+        {% set lo = states('input_number.pet_temp_min')|float(18) %}
+        {% set hi = states('input_number.pet_temp_max')|float(26) %}
+        {{ t < lo or t > hi }}
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Pet Comfort"
+        message: "Lounge temp outside comfort band → (virtually) adjust HVAC / setpoint."
+
+- alias: Pet | Bark Calming
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dog_barking
+      to: "on"
+      for: "00:00:10"
+  condition:
+    - condition: state
+      entity_id: input_boolean.overlay_pet_home
+      state: "on"
+  action:
+    - service: switch.turn_on
+      target: { entity_id: switch.whitenoise_switch }
+    - service: persistent_notification.create
+      data: { title: "Pet Calm", message: "Barking detected → White noise enabled." }
+
+- alias: Pet | Doorbell Calming
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sim_doorbell
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.overlay_pet_home
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.doorbell_muted
+      state: "on"
+  action:
+    - service: switch.turn_on
+      target: { entity_id: switch.whitenoise_switch }
+    - service: persistent_notification.create
+      data: { title: "Pet Calm", message: "Doorbell muted → Calm routine (white noise) triggered." }
+      
+# G) Door policy: Away/Sleep lock rules + Pet/Away exception
+- alias: Security | Door Policy
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.mode_away
+        - input_boolean.mode_sleep
+        - input_boolean.overlay_pet_home
+  action:
+    - choose:
+        # Away + Pet overlay → Front locked, Back unlocked
+        - conditions: >
+            {{ is_state('input_boolean.mode_away','on')
+               and is_state('input_boolean.overlay_pet_home','on') }}
+          sequence:
+            - service: lock.lock
+              target:
+                entity_id: lock.front_door_sim
+            - service: lock.unlock
+              target:
+                entity_id: lock.back_door_sim
+            - service: persistent_notification.create
+              data:
+                title: "Security"
+                message: "Away + Pet overlay → Front locked, Back unlocked."
+
+        # Away (no Pet overlay) → Lock both
+        - conditions: "{{ is_state('input_boolean.mode_away','on') }}"
+          sequence:
+            - service: lock.lock
+              target:
+                entity_id:
+                  - lock.front_door_sim
+                  - lock.back_door_sim
+            - service: persistent_notification.create
+              data:
+                title: "Security"
+                message: "Away → Both doors locked."
+
+        # Sleep → Lock both
+        - conditions: "{{ is_state('input_boolean.mode_sleep','on') }}"
+          sequence:
+            - service: lock.lock
+              target:
+                entity_id:
+                  - lock.front_door_sim
+                  - lock.back_door_sim
+            - service: persistent_notification.create
+              data:
+                title: "Security"
+                message: "Sleep → Both doors locked."
+
+# --- Template locks (use the helpers above) ---
+lock:
+  - platform: template
+    name: front_door_sim
+    value_template: "{{ is_state('input_boolean.front_door_sim','on') }}"
+    lock:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.front_door_sim
+    unlock:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.front_door_sim
+
+  - platform: template
+    name: back_door_sim
+    value_template: "{{ is_state('input_boolean.back_door_sim','on') }}"
+    lock:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.back_door_sim
+    unlock:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.back_door_sim

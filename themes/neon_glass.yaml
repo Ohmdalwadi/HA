@@ -1,0 +1,51 @@
+Neon Glass (GenZ):
+  # ----- Core palette -----
+  primary-color: "#7C3AED"           # purple
+  accent-color:  "#06B6D4"           # cyan
+  primary-text-color: "#E6E8EC"
+  secondary-text-color: "#B7BBC7"
+  disabled-text-color: "rgba(230,232,236,0.5)"
+  divider-color: "rgba(255,255,255,0.06)"
+
+  # ----- Backgrounds -----
+  primary-background-color: "#0b1020"     # page background
+  secondary-background-color: "#0e1428"
+  card-background-color: "rgba(16,18,27,0.55)"   # semi-transparent
+  ha-card-background: "rgba(16,18,27,0.55)"
+  paper-card-background-color: "var(--ha-card-background)"
+  ha-card-border-radius: 18px
+  ha-card-box-shadow: "0 10px 30px rgba(0,0,0,0.35)"
+
+  # App header / sidebar
+  app-header-background-color: "rgba(16,18,27,0.6)"
+  app-header-text-color: "#E6E8EC"
+  sidebar-background-color: "rgba(16,18,27,0.6)"
+  sidebar-selected-text-color: "var(--primary-color)"
+  sidebar-selected-icon-color: "var(--primary-color)"
+
+  # ----- Mushroom overrides -----
+  # RGB values only (no #). These drive chip/icon accent colors.
+  --mush-rgb-primary: 124,58,237        # purple  (#7C3AED)
+  --mush-rgb-accent:  6,182,212         # cyan    (#06B6D4)
+  --mush-rgb-info:    59,130,246        # blue
+  --mush-rgb-success: 34,197,94         # green
+  --mush-rgb-warning: 245,158,11        # amber
+  --mush-rgb-danger:  244,63,94         # rose
+
+  --mush-radius: 18px
+  --mush-chip-border-radius: 999px
+  --mush-control-border-radius: 14px
+  --mush-icon-border-radius: 14px
+  --mush-spacing: 12px
+  --mush-card-primary-font-size: 16px
+  --mush-card-secondary-font-size: 13px
+
+  # Subtle borders on transparent cards
+  border-color: "rgba(255,255,255,0.08)"
+  ha-card-border-color: "var(--border-color)"
+
+  # Optional: brighter toggles
+  switch-checked-button-color: "var(--primary-color)"
+  switch-checked-track-color: "rgba(124,58,237,0.5)"
+
+  # ----- (Optional) set per-view gradient background in Lovelace too -----
