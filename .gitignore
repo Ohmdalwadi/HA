@@ -13,3 +13,7 @@ deps/
 __pycache__/
 .DS_Store
 Thumbs.db
+home-assistant.log*
+*.log*
+custom_components/
+www/community/
