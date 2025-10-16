@@ -9,6 +9,17 @@ homeassistant:
 frontend:
   themes: !include_dir_merge_named themes
 
+# Lovelace dashboards
+lovelace:
+  mode: storage
+  dashboards:
+    dashboard-smart-home-hub:
+      mode: yaml
+      title: Smart Home Hub
+      icon: mdi:home-analytics
+      show_in_sidebar: true
+      filename: dashboards/dashboard_v2.yaml
+
 # Existing includes (fine as-is)
 automation: !include automations.yaml
 script: !include scripts.yaml

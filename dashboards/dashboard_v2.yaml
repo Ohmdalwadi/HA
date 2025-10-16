@@ -1,0 +1,960 @@
+# ==================== MODERN DASHBOARD V2 ====================
+# Glass Morphism Design | Room-Based Layout | Energy Analytics
+# Updated: October 2025
+
+title: Smart Home Hub
+theme: Backend-selected
+
+views:
+  # ==================== HOME (LANDING PAGE) ====================
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    background: >
+      linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+    sections:
+      # === HERO STATUS CARD ===
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Welcome Home
+            subtitle: >
+              {{ now().strftime('%A, %B %d') }} • {{ now().strftime('%I:%M %p') }}
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(255, 255, 255, 0.95) !important;
+                  backdrop-filter: blur(20px) !important;
+                  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+                  border-radius: 24px !important;
+                  padding: 24px !important;
+                }
+
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                icon: mdi:home-account
+                content: |
+                  {{ 'Home' if is_state('input_boolean.mode_home','on')
+                     else 'Guest' if is_state('input_boolean.mode_guest','on')
+                     else 'Sleep' if is_state('input_boolean.mode_sleep','on')
+                     else 'Away' if is_state('input_boolean.mode_away','on')
+                     else 'No Mode' }}
+                icon_color: |
+                  {{ 'green' if is_state('input_boolean.mode_home','on')
+                     else 'purple' if is_state('input_boolean.mode_guest','on')
+                     else 'blue' if is_state('input_boolean.mode_sleep','on')
+                     else 'amber' if is_state('input_boolean.mode_away','on')
+                     else 'grey' }}
+
+              - type: template
+                icon: mdi:lightning-bolt
+                content: "{{ states('sensor.total_house_power') | round(0) }} W"
+                icon_color: >
+                  {% set power = states('sensor.total_house_power') | float(0) %}
+                  {% if power > 5000 %}red
+                  {% elif power > 2000 %}amber
+                  {% else %}green
+                  {% endif %}
+
+              - type: template
+                icon: mdi:cash
+                content: "${{ states('sensor.energy_cost_today') }}"
+                icon_color: blue
+
+      # === QUICK ACTIONS ===
+      - type: grid
+        title: Quick Actions
+        cards:
+          - type: custom:mushroom-template-card
+            primary: All Lights Off
+            secondary: Turn off all lighting
+            icon: mdi:lightbulb-group-off
+            icon_color: amber
+            tap_action:
+              action: call-service
+              service: light.turn_off
+              target:
+                entity_id: all
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #FFF4E6 0%, #FFE0B2 100%) !important;
+                  border: none !important;
+                  box-shadow: 0 4px 16px rgba(255, 152, 0, 0.2) !important;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: Good Night
+            secondary: Sleep mode + lock doors
+            icon: mdi:weather-night
+            icon_color: indigo
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_sleep
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%) !important;
+                  border: none !important;
+                  box-shadow: 0 4px 16px rgba(63, 81, 181, 0.2) !important;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: Leaving Home
+            secondary: Away mode + AC off
+            icon: mdi:home-export-outline
+            icon_color: amber
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_away
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%) !important;
+                  border: none !important;
+                  box-shadow: 0 4px 16px rgba(255, 235, 59, 0.2) !important;
+                }
+
+      # === ROOMS OVERVIEW ===
+      - type: grid
+        title: Rooms
+        columns: 2
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Living Room
+            secondary: "{{ states('sensor.living_room_total_power') | round(0) }} W"
+            icon: mdi:sofa
+            icon_color: >
+              {% set power = states('sensor.living_room_total_power') | float(0) %}
+              {% if power > 1000 %}red
+              {% elif power > 300 %}amber
+              {% else %}green
+              {% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-smart-home-hub/living-room
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(255, 255, 255, 0.95) !important;
+                  backdrop-filter: blur(10px) !important;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: Kitchen
+            secondary: "{{ states('sensor.kitchen_total_power') | round(0) }} W"
+            icon: mdi:chef-hat
+            icon_color: >
+              {% set power = states('sensor.kitchen_total_power') | float(0) %}
+              {% if power > 2000 %}red
+              {% elif power > 500 %}amber
+              {% else %}green
+              {% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-smart-home-hub/kitchen
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(255, 255, 255, 0.95) !important;
+                  backdrop-filter: blur(10px) !important;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: Bedroom
+            secondary: "{{ states('sensor.bedroom_total_power') | round(0) }} W"
+            icon: mdi:bed
+            icon_color: >
+              {% set power = states('sensor.bedroom_total_power') | float(0) %}
+              {% if power > 200 %}amber
+              {% else %}green
+              {% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-smart-home-hub/bedroom
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(255, 255, 255, 0.95) !important;
+                  backdrop-filter: blur(10px) !important;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: Office
+            secondary: "{{ states('sensor.office_total_power') | round(0) }} W"
+            icon: mdi:desk
+            icon_color: >
+              {% set power = states('sensor.office_total_power') | float(0) %}
+              {% if power > 400 %}amber
+              {% else %}green
+              {% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-smart-home-hub/office
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(255, 255, 255, 0.95) !important;
+                  backdrop-filter: blur(10px) !important;
+                }
+
+      # === ENERGY OVERVIEW ===
+      - type: grid
+        title: Energy Today
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.house_energy_today
+            name: Total Energy
+            icon: mdi:lightning-bolt
+            icon_color: >
+              {% set energy = states('sensor.house_energy_today') | float(0) %}
+              {% set budget = states('input_number.daily_energy_budget_kwh') | float(100) %}
+              {% if energy >= budget %}red
+              {% elif energy >= budget * 0.8 %}amber
+              {% else %}green
+              {% endif %}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.energy_budget_percent
+            name: Budget Used
+            icon: mdi:percent
+            icon_color: >
+              {% set pct = states('sensor.energy_budget_percent') | float(0) %}
+              {% if pct >= 100 %}red
+              {% elif pct >= 80 %}amber
+              {% else %}green
+              {% endif %}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.energy_cost_today
+            name: Cost Today
+            icon: mdi:currency-usd
+            icon_color: blue
+
+  # ==================== LIVING ROOM ====================
+  - title: Living Room
+    path: living-room
+    icon: mdi:sofa
+    type: sections
+    background: >
+      linear-gradient(135deg, #f093fb 0%, #f5576c 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Living Room
+            subtitle: "Power: {{ states('sensor.living_room_total_power') | round(0) }} W"
+
+      - type: grid
+        title: Entertainment
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.tv_switch
+            name: TV
+            icon: mdi:television
+            layout: vertical
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: switch.sound_bar
+            name: Sound Bar
+            icon: mdi:speaker
+            layout: vertical
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: switch.gaming_console
+            name: Gaming Console
+            icon: mdi:controller
+            layout: vertical
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Lighting
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.living_room_ceiling
+            name: Ceiling Lights
+            icon: mdi:ceiling-light
+            layout: vertical
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: light.floor_lamp
+            name: Floor Lamp
+            icon: mdi:floor-lamp
+            layout: vertical
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Climate & Cleaning
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.air_conditioner
+            name: Air Conditioner
+            icon: mdi:air-conditioner
+            layout: vertical
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: switch.robot_vacuum
+            name: Robot Vacuum
+            icon: mdi:robot-vacuum
+            layout: vertical
+            tap_action:
+              action: toggle
+
+  # ==================== KITCHEN ====================
+  - title: Kitchen
+    path: kitchen
+    icon: mdi:chef-hat
+    type: sections
+    background: >
+      linear-gradient(135deg, #fa709a 0%, #fee140 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Kitchen
+            subtitle: "Power: {{ states('sensor.kitchen_total_power') | round(0) }} W"
+
+      - type: grid
+        title: Appliances
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.kettle_switch
+            name: Kettle
+            icon: mdi:kettle
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.coffee_maker
+            name: Coffee
+            icon: mdi:coffee-maker
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.microwave
+            name: Microwave
+            icon: mdi:microwave
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.oven
+            name: Oven
+            icon: mdi:stove
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.toaster
+            name: Toaster
+            icon: mdi:toaster-oven
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.slow_cooker
+            name: Slow Cooker
+            icon: mdi:pot-steam
+            layout: vertical
+
+      - type: grid
+        title: Large Appliances
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.refrigerator
+            name: Refrigerator
+            icon: mdi:fridge
+            layout: vertical
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: switch.dishwasher
+            name: Dishwasher
+            icon: mdi:dishwasher
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.range_hood
+            name: Range Hood
+            icon: mdi:fan
+            layout: vertical
+
+  # ==================== BEDROOM ====================
+  - title: Bedroom
+    path: bedroom
+    icon: mdi:bed
+    type: sections
+    background: >
+      linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Bedroom
+            subtitle: "Power: {{ states('sensor.bedroom_total_power') | round(0) }} W"
+
+      - type: grid
+        title: Devices
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.bedside_lamp
+            name: Bedside Lamp
+            icon: mdi:lamp
+            layout: vertical
+
+  # ==================== OFFICE ====================
+  - title: Office
+    path: office
+    icon: mdi:desk
+    type: sections
+    background: >
+      linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Home Office
+            subtitle: "Power: {{ states('sensor.office_total_power') | round(0) }} W"
+
+      - type: grid
+        title: Workstation
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.desk_lamp
+            name: Desk Lamp
+            icon: mdi:desk-lamp
+            layout: vertical
+
+  # ==================== ENERGY ANALYTICS ====================
+  - title: Energy
+    path: energy
+    icon: mdi:chart-line
+    type: sections
+    background: >
+      linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Energy Analytics
+            subtitle: Real-time monitoring & insights
+
+      - type: grid
+        title: Current Status
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.total_house_power
+            name: Live Power
+            icon: mdi:lightning-bolt
+            icon_color: amber
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.house_energy_today
+            name: Energy Today
+            icon: mdi:flash
+            icon_color: blue
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.energy_cost_today
+            name: Cost Today
+            icon: mdi:currency-usd
+            icon_color: green
+
+      - type: grid
+        title: Budget Tracking
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.energy_budget_percent
+            name: Budget Used
+            icon: mdi:percent
+            icon_color: >
+              {% set pct = states('sensor.energy_budget_percent') | float(0) %}
+              {% if pct >= 100 %}red
+              {% elif pct >= 80 %}amber
+              {% else %}green
+              {% endif %}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.energy_budget_remaining
+            name: Remaining
+            icon: mdi:battery-charging-80
+            icon_color: green
+
+          - type: custom:mushroom-entity-card
+            entity: input_number.daily_energy_budget_kwh
+            name: Daily Budget
+            icon: mdi:cash-clock
+
+      - type: grid
+        title: Room Breakdown
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.living_room_total_power
+            name: Living Room
+            icon: mdi:sofa
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.kitchen_total_power
+            name: Kitchen
+            icon: mdi:chef-hat
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.bedroom_total_power
+            name: Bedroom
+            icon: mdi:bed
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.office_total_power
+            name: Office
+            icon: mdi:desk
+            secondary_info: state
+
+      - type: grid
+        title: Power History
+        cards:
+          - type: history-graph
+            title: Power Draw (24 Hours)
+            hours_to_show: 24
+            entities:
+              - entity: sensor.total_house_power
+                name: Total Power
+
+  # ==================== MODES & POLICIES ====================
+  - title: Modes
+    path: modes
+    icon: mdi:tune-variant
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Policy Engine
+            subtitle: Modes & Overlays
+
+      - type: grid
+        title: Base Modes
+        columns: 2
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Home
+            secondary: Living & Active
+            icon: mdi:home
+            icon_color: >
+              {{ 'green' if is_state('input_boolean.mode_home','on') else 'grey' }}
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_home
+
+          - type: custom:mushroom-template-card
+            primary: Guest
+            secondary: Visitors Present
+            icon: mdi:account-group
+            icon_color: >
+              {{ 'purple' if is_state('input_boolean.mode_guest','on') else 'grey' }}
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_guest
+
+          - type: custom:mushroom-template-card
+            primary: Sleep
+            secondary: Rest & Quiet
+            icon: mdi:power-sleep
+            icon_color: >
+              {{ 'blue' if is_state('input_boolean.mode_sleep','on') else 'grey' }}
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_sleep
+
+          - type: custom:mushroom-template-card
+            primary: Away
+            secondary: House Empty
+            icon: mdi:home-export-outline
+            icon_color: >
+              {{ 'amber' if is_state('input_boolean.mode_away','on') else 'grey' }}
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_away
+
+      - type: grid
+        title: Overlays
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.overlay_wfh
+            name: Work From Home
+            icon: mdi:laptop
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.overlay_pet_home
+            name: Pet at Home
+            icon: mdi:dog
+            tap_action:
+              action: toggle
+
+  # ==================== LAUNDRY ====================
+  - title: Laundry
+    path: laundry
+    icon: mdi:washing-machine
+    type: sections
+    background: >
+      linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Laundry Room
+            subtitle: Large appliances
+
+      - type: grid
+        title: Appliances
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.washing_machine
+            name: Washing Machine
+            icon: mdi:washing-machine
+            layout: vertical
+            tap_action:
+              action: toggle
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: switch.dryer
+            name: Dryer
+            icon: mdi:tumble-dryer
+            layout: vertical
+            tap_action:
+              action: toggle
+            secondary_info: state
+
+      - type: grid
+        title: Power Usage
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.washing_machine_power
+            name: Washer Power
+            icon: mdi:flash
+            icon_color: blue
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.dryer_power
+            name: Dryer Power
+            icon: mdi:flash
+            icon_color: red
+
+  # ==================== OUTDOOR / GARAGE ====================
+  - title: Outdoor
+    path: outdoor
+    icon: mdi:tree
+    type: sections
+    background: >
+      linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Outdoor & Garage
+            subtitle: Exterior devices
+
+      - type: grid
+        title: Lighting
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.garden_lights
+            name: Garden Lights
+            icon: mdi:string-lights
+            layout: vertical
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: light.security_floodlights
+            name: Security Floodlights
+            icon: mdi:outdoor-lamp
+            layout: vertical
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: EV Charging
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.ev_charger
+            name: EV Charger
+            icon: mdi:ev-station
+            icon_color: >
+              {{ 'green' if is_state('switch.ev_charger','on') else 'grey' }}
+            tap_action:
+              action: toggle
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.ev_charger_power
+            name: Charging Power
+            icon: mdi:lightning-bolt
+            icon_color: amber
+
+  # ==================== INFRASTRUCTURE ====================
+  - title: Infrastructure
+    path: infrastructure
+    icon: mdi:server-network
+    type: sections
+    background: >
+      linear-gradient(135deg, #434343 0%, #000000 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Smart Home Infrastructure
+            subtitle: Always-on systems
+
+      - type: grid
+        title: Network & Servers
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.wifi_router
+            name: WiFi Router
+            icon: mdi:router-wireless
+            icon_color: green
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: switch.nas_server
+            name: NAS Server
+            icon: mdi:server
+            icon_color: blue
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Power Draw
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.wifi_router_power
+            name: Router
+            icon: mdi:flash
+            icon_color: amber
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.nas_server_power
+            name: NAS
+            icon: mdi:flash
+            icon_color: amber
+
+  # ==================== ALL DEVICES ====================
+  - title: All Devices
+    path: devices
+    icon: mdi:devices
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: All Devices
+            subtitle: Complete device list
+
+      - type: grid
+        title: Living Room ({{ states('sensor.living_room_total_power') | round(0) }} W)
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.tv_switch
+            name: TV
+            icon: mdi:television
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.sound_bar
+            name: Sound Bar
+            icon: mdi:speaker
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.gaming_console
+            name: Console
+            icon: mdi:controller
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: light.floor_lamp
+            name: Floor Lamp
+            icon: mdi:floor-lamp
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: light.living_room_ceiling
+            name: Ceiling
+            icon: mdi:ceiling-light
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.air_conditioner
+            name: AC
+            icon: mdi:air-conditioner
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.robot_vacuum
+            name: Vacuum
+            icon: mdi:robot-vacuum
+            layout: vertical
+
+      - type: grid
+        title: Kitchen ({{ states('sensor.kitchen_total_power') | round(0) }} W)
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.kettle_switch
+            name: Kettle
+            icon: mdi:kettle
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.coffee_maker
+            name: Coffee
+            icon: mdi:coffee-maker
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.microwave
+            name: Microwave
+            icon: mdi:microwave
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.oven
+            name: Oven
+            icon: mdi:stove
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.refrigerator
+            name: Fridge
+            icon: mdi:fridge
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.dishwasher
+            name: Dishwasher
+            icon: mdi:dishwasher
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.toaster
+            name: Toaster
+            icon: mdi:toaster-oven
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.slow_cooker
+            name: Slow Cooker
+            icon: mdi:pot-steam
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.range_hood
+            name: Hood
+            icon: mdi:fan
+            layout: vertical
+
+      - type: grid
+        title: Bedroom ({{ states('sensor.bedroom_total_power') | round(0) }} W)
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.bedside_lamp
+            name: Bedside Lamp
+            icon: mdi:lamp
+            layout: vertical
+
+      - type: grid
+        title: Office ({{ states('sensor.office_total_power') | round(0) }} W)
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.desk_lamp
+            name: Desk Lamp
+            icon: mdi:desk-lamp
+            layout: vertical
+
+      - type: grid
+        title: Laundry
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.washing_machine
+            name: Washing Machine
+            icon: mdi:washing-machine
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.dryer
+            name: Dryer
+            icon: mdi:tumble-dryer
+            layout: vertical
+
+      - type: grid
+        title: Outdoor & Infrastructure
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: light.garden_lights
+            name: Garden
+            icon: mdi:string-lights
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.ev_charger
+            name: EV Charger
+            icon: mdi:ev-station
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.wifi_router
+            name: WiFi
+            icon: mdi:router-wireless
+            layout: vertical
+
+          - type: custom:mushroom-entity-card
+            entity: switch.nas_server
+            name: NAS
+            icon: mdi:server
+            layout: vertical

@@ -1,0 +1,842 @@
+# === COMPREHENSIVE VIRTUAL DEVICE PACKAGE ===
+# 44 household devices with realistic power profiles
+# All devices are virtual (input_boolean + input_number + template switches)
+
+# ==================== INPUT BOOLEANS (Device States) ====================
+input_boolean:
+  # === LIVING ROOM (8 devices) ===
+  sim_tv: { name: "TV", icon: mdi:television }
+  sim_sound_bar: { name: "Sound Bar", icon: mdi:speaker }
+  sim_gaming_console: { name: "Gaming Console", icon: mdi:controller }
+  sim_floor_lamp: { name: "Floor Lamp", icon: mdi:floor-lamp }
+  sim_ceiling_lights_living: { name: "Living Room Ceiling Lights", icon: mdi:ceiling-light }
+  sim_air_conditioner: { name: "Air Conditioner", icon: mdi:air-conditioner }
+  sim_robot_vacuum: { name: "Robot Vacuum", icon: mdi:robot-vacuum }
+  sim_smart_speaker: { name: "Smart Speaker", icon: mdi:google-assistant }
+
+  # === KITCHEN (9 devices) ===
+  sim_kettle: { name: "Kettle", icon: mdi:kettle }
+  sim_coffee_maker: { name: "Coffee Maker", icon: mdi:coffee-maker }
+  sim_microwave: { name: "Microwave", icon: mdi:microwave }
+  sim_oven: { name: "Oven", icon: mdi:stove }
+  sim_refrigerator: { name: "Refrigerator", icon: mdi:fridge }
+  sim_dishwasher: { name: "Dishwasher", icon: mdi:dishwasher }
+  sim_toaster: { name: "Toaster", icon: mdi:toaster-oven }
+  sim_slow_cooker: { name: "Slow Cooker", icon: mdi:pot-steam }
+  sim_range_hood: { name: "Range Hood", icon: mdi:fan }
+
+  # === BEDROOM (7 devices) ===
+  sim_bedside_lamp: { name: "Bedside Lamp", icon: mdi:lamp }
+  sim_ceiling_fan: { name: "Ceiling Fan", icon: mdi:ceiling-fan }
+  sim_phone_charger_bed: { name: "Bedroom Phone Charger", icon: mdi:cellphone-charging }
+  sim_laptop_charger: { name: "Laptop Charger", icon: mdi:laptop }
+  sim_electric_blanket: { name: "Electric Blanket", icon: mdi:blanket }
+  sim_air_purifier: { name: "Air Purifier", icon: mdi:air-purifier }
+  sim_alarm_clock: { name: "Alarm Clock Radio", icon: mdi:alarm }
+
+  # === BATHROOM (3 devices) ===
+  sim_exhaust_fan: { name: "Exhaust Fan", icon: mdi:fan }
+  sim_hair_dryer: { name: "Hair Dryer", icon: mdi:hair-dryer }
+  sim_toothbrush_charger: { name: "Electric Toothbrush Charger", icon: mdi:toothbrush-electric }
+
+  # === HOME OFFICE (6 devices) ===
+  sim_desktop_computer: { name: "Desktop Computer", icon: mdi:desktop-tower }
+  sim_monitor_1: { name: "Monitor 1", icon: mdi:monitor }
+  sim_monitor_2: { name: "Monitor 2", icon: mdi:monitor }
+  sim_desk_lamp: { name: "Desk Lamp", icon: mdi:desk-lamp }
+  sim_printer: { name: "Printer", icon: mdi:printer }
+  sim_phone_charger_office: { name: "Office Phone Charger", icon: mdi:cellphone-charging }
+
+  # === LAUNDRY (2 devices) ===
+  sim_washing_machine: { name: "Washing Machine", icon: mdi:washing-machine }
+  sim_dryer: { name: "Dryer", icon: mdi:tumble-dryer }
+
+  # === OUTDOOR / GARAGE (3 devices) ===
+  sim_garden_lights: { name: "Garden Lights", icon: mdi:string-lights }
+  sim_ev_charger: { name: "EV Charger", icon: mdi:ev-station }
+  sim_security_floodlights: { name: "Security Floodlights", icon: mdi:outdoor-lamp }
+
+  # === SMART INFRASTRUCTURE (4 devices) ===
+  sim_wifi_router: { name: "WiFi Router", icon: mdi:router-wireless }
+  sim_smart_hub: { name: "Smart Hub", icon: mdi:home-automation }
+  sim_nas_server: { name: "NAS Server", icon: mdi:server }
+  sim_security_cameras: { name: "Security Camera System", icon: mdi:cctv }
+
+  # === WHITE NOISE (existing, kept for compatibility) ===
+  sim_whitenoise: { name: "White Noise Speaker", icon: mdi:waveform }
+
+# ==================== INPUT NUMBERS (Power Levels) ====================
+input_number:
+  # === LIVING ROOM ===
+  sim_power_tv: { name: "TV Power", min: 0, max: 250, step: 5, unit_of_measurement: "W" }
+  sim_power_sound_bar: { name: "Sound Bar Power", min: 0, max: 50, step: 5, unit_of_measurement: "W" }
+  sim_power_gaming_console: { name: "Gaming Console Power", min: 0, max: 200, step: 10, unit_of_measurement: "W" }
+  sim_power_floor_lamp: { name: "Floor Lamp Power", min: 0, max: 20, step: 1, unit_of_measurement: "W" }
+  sim_power_ceiling_lights_living: { name: "Living Room Lights Power", min: 0, max: 80, step: 5, unit_of_measurement: "W" }
+  sim_power_air_conditioner: { name: "AC Power", min: 0, max: 1500, step: 50, unit_of_measurement: "W" }
+  sim_power_robot_vacuum: { name: "Robot Vacuum Power", min: 0, max: 40, step: 5, unit_of_measurement: "W" }
+  sim_power_smart_speaker: { name: "Smart Speaker Power", min: 0, max: 10, step: 1, unit_of_measurement: "W" }
+
+  # === KITCHEN ===
+  sim_power_kettle: { name: "Kettle Power", min: 0, max: 2000, step: 10, unit_of_measurement: "W" }
+  sim_power_coffee_maker: { name: "Coffee Maker Power", min: 0, max: 1200, step: 10, unit_of_measurement: "W" }
+  sim_power_microwave: { name: "Microwave Power", min: 0, max: 1200, step: 10, unit_of_measurement: "W" }
+  sim_power_oven: { name: "Oven Power", min: 0, max: 3000, step: 50, unit_of_measurement: "W" }
+  sim_power_refrigerator: { name: "Refrigerator Power", min: 0, max: 200, step: 5, unit_of_measurement: "W" }
+  sim_power_dishwasher: { name: "Dishwasher Power", min: 0, max: 2000, step: 50, unit_of_measurement: "W" }
+  sim_power_toaster: { name: "Toaster Power", min: 0, max: 1000, step: 10, unit_of_measurement: "W" }
+  sim_power_slow_cooker: { name: "Slow Cooker Power", min: 0, max: 250, step: 10, unit_of_measurement: "W" }
+  sim_power_range_hood: { name: "Range Hood Power", min: 0, max: 150, step: 10, unit_of_measurement: "W" }
+
+  # === BEDROOM ===
+  sim_power_bedside_lamp: { name: "Bedside Lamp Power", min: 0, max: 15, step: 1, unit_of_measurement: "W" }
+  sim_power_ceiling_fan: { name: "Ceiling Fan Power", min: 0, max: 100, step: 5, unit_of_measurement: "W" }
+  sim_power_phone_charger_bed: { name: "Bedroom Charger Power", min: 0, max: 15, step: 1, unit_of_measurement: "W" }
+  sim_power_laptop_charger: { name: "Laptop Charger Power", min: 0, max: 80, step: 5, unit_of_measurement: "W" }
+  sim_power_electric_blanket: { name: "Electric Blanket Power", min: 0, max: 80, step: 5, unit_of_measurement: "W" }
+  sim_power_air_purifier: { name: "Air Purifier Power", min: 0, max: 50, step: 5, unit_of_measurement: "W" }
+  sim_power_alarm_clock: { name: "Alarm Clock Power", min: 0, max: 10, step: 1, unit_of_measurement: "W" }
+
+  # === BATHROOM ===
+  sim_power_exhaust_fan: { name: "Exhaust Fan Power", min: 0, max: 40, step: 5, unit_of_measurement: "W" }
+  sim_power_hair_dryer: { name: "Hair Dryer Power", min: 0, max: 2000, step: 50, unit_of_measurement: "W" }
+  sim_power_toothbrush_charger: { name: "Toothbrush Charger Power", min: 0, max: 5, step: 1, unit_of_measurement: "W" }
+
+  # === HOME OFFICE ===
+  sim_power_desktop_computer: { name: "Desktop PC Power", min: 0, max: 300, step: 10, unit_of_measurement: "W" }
+  sim_power_monitor_1: { name: "Monitor 1 Power", min: 0, max: 40, step: 5, unit_of_measurement: "W" }
+  sim_power_monitor_2: { name: "Monitor 2 Power", min: 0, max: 40, step: 5, unit_of_measurement: "W" }
+  sim_power_desk_lamp: { name: "Desk Lamp Power", min: 0, max: 20, step: 1, unit_of_measurement: "W" }
+  sim_power_printer: { name: "Printer Power", min: 0, max: 500, step: 10, unit_of_measurement: "W" }
+  sim_power_phone_charger_office: { name: "Office Charger Power", min: 0, max: 15, step: 1, unit_of_measurement: "W" }
+
+  # === LAUNDRY ===
+  sim_power_washing_machine: { name: "Washing Machine Power", min: 0, max: 600, step: 10, unit_of_measurement: "W" }
+  sim_power_dryer: { name: "Dryer Power", min: 0, max: 3500, step: 50, unit_of_measurement: "W" }
+
+  # === OUTDOOR / GARAGE ===
+  sim_power_garden_lights: { name: "Garden Lights Power", min: 0, max: 60, step: 5, unit_of_measurement: "W" }
+  sim_power_ev_charger: { name: "EV Charger Power", min: 0, max: 8000, step: 100, unit_of_measurement: "W" }
+  sim_power_security_floodlights: { name: "Security Floodlights Power", min: 0, max: 120, step: 10, unit_of_measurement: "W" }
+
+  # === SMART INFRASTRUCTURE ===
+  sim_power_wifi_router: { name: "WiFi Router Power", min: 0, max: 30, step: 1, unit_of_measurement: "W" }
+  sim_power_smart_hub: { name: "Smart Hub Power", min: 0, max: 10, step: 1, unit_of_measurement: "W" }
+  sim_power_nas_server: { name: "NAS Server Power", min: 0, max: 60, step: 5, unit_of_measurement: "W" }
+  sim_power_security_cameras: { name: "Security Cameras Power", min: 0, max: 40, step: 5, unit_of_measurement: "W" }
+
+  # === WHITE NOISE (existing) ===
+  sim_power_whitenoise: { name: "White Noise Power", min: 0, max: 30, step: 1, unit_of_measurement: "W" }
+
+# ==================== TEMPLATE SENSORS (Power Readings) ====================
+template:
+  - sensor:
+      # === LIVING ROOM ===
+      - name: "TV Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_tv') }}"
+
+      - name: "Sound Bar Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_sound_bar') }}"
+
+      - name: "Gaming Console Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_gaming_console') }}"
+
+      - name: "Floor Lamp Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_floor_lamp') }}"
+
+      - name: "Living Room Lights Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_ceiling_lights_living') }}"
+
+      - name: "Air Conditioner Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_air_conditioner') }}"
+
+      - name: "Robot Vacuum Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_robot_vacuum') }}"
+
+      - name: "Smart Speaker Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_smart_speaker') }}"
+
+      # === KITCHEN ===
+      - name: "Kettle Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_kettle') }}"
+
+      - name: "Coffee Maker Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_coffee_maker') }}"
+
+      - name: "Microwave Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_microwave') }}"
+
+      - name: "Oven Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_oven') }}"
+
+      - name: "Refrigerator Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_refrigerator') }}"
+
+      - name: "Dishwasher Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_dishwasher') }}"
+
+      - name: "Toaster Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_toaster') }}"
+
+      - name: "Slow Cooker Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_slow_cooker') }}"
+
+      - name: "Range Hood Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_range_hood') }}"
+
+      # === BEDROOM ===
+      - name: "Bedside Lamp Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_bedside_lamp') }}"
+
+      - name: "Ceiling Fan Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_ceiling_fan') }}"
+
+      - name: "Bedroom Phone Charger Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_phone_charger_bed') }}"
+
+      - name: "Laptop Charger Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_laptop_charger') }}"
+
+      - name: "Electric Blanket Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_electric_blanket') }}"
+
+      - name: "Air Purifier Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_air_purifier') }}"
+
+      - name: "Alarm Clock Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_alarm_clock') }}"
+
+      # === BATHROOM ===
+      - name: "Exhaust Fan Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_exhaust_fan') }}"
+
+      - name: "Hair Dryer Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_hair_dryer') }}"
+
+      - name: "Toothbrush Charger Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_toothbrush_charger') }}"
+
+      # === HOME OFFICE ===
+      - name: "Desktop Computer Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_desktop_computer') }}"
+
+      - name: "Monitor 1 Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_monitor_1') }}"
+
+      - name: "Monitor 2 Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_monitor_2') }}"
+
+      - name: "Desk Lamp Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_desk_lamp') }}"
+
+      - name: "Printer Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_printer') }}"
+
+      - name: "Office Phone Charger Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_phone_charger_office') }}"
+
+      # === LAUNDRY ===
+      - name: "Washing Machine Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_washing_machine') }}"
+
+      - name: "Dryer Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_dryer') }}"
+
+      # === OUTDOOR / GARAGE ===
+      - name: "Garden Lights Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_garden_lights') }}"
+
+      - name: "EV Charger Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_ev_charger') }}"
+
+      - name: "Security Floodlights Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_security_floodlights') }}"
+
+      # === SMART INFRASTRUCTURE ===
+      - name: "WiFi Router Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_wifi_router') }}"
+
+      - name: "Smart Hub Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_smart_hub') }}"
+
+      - name: "NAS Server Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_nas_server') }}"
+
+      - name: "Security Cameras Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_security_cameras') }}"
+
+      # === WHITE NOISE ===
+      - name: "White Noise Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('input_number.sim_power_whitenoise') }}"
+
+      # === ROOM TOTALS ===
+      - name: "Living Room Total Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {{ (states('sensor.tv_power')|float(0) +
+              states('sensor.sound_bar_power')|float(0) +
+              states('sensor.gaming_console_power')|float(0) +
+              states('sensor.floor_lamp_power')|float(0) +
+              states('sensor.living_room_lights_power')|float(0) +
+              states('sensor.air_conditioner_power')|float(0) +
+              states('sensor.robot_vacuum_power')|float(0) +
+              states('sensor.smart_speaker_power')|float(0)) | round(1) }}
+
+      - name: "Kitchen Total Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {{ (states('sensor.kettle_power')|float(0) +
+              states('sensor.coffee_maker_power')|float(0) +
+              states('sensor.microwave_power')|float(0) +
+              states('sensor.oven_power')|float(0) +
+              states('sensor.refrigerator_power')|float(0) +
+              states('sensor.dishwasher_power')|float(0) +
+              states('sensor.toaster_power')|float(0) +
+              states('sensor.slow_cooker_power')|float(0) +
+              states('sensor.range_hood_power')|float(0)) | round(1) }}
+
+      - name: "Bedroom Total Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {{ (states('sensor.bedside_lamp_power')|float(0) +
+              states('sensor.ceiling_fan_power')|float(0) +
+              states('sensor.bedroom_phone_charger_power')|float(0) +
+              states('sensor.laptop_charger_power')|float(0) +
+              states('sensor.electric_blanket_power')|float(0) +
+              states('sensor.air_purifier_power')|float(0) +
+              states('sensor.alarm_clock_power')|float(0)) | round(1) }}
+
+      - name: "Office Total Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {{ (states('sensor.desktop_computer_power')|float(0) +
+              states('sensor.monitor_1_power')|float(0) +
+              states('sensor.monitor_2_power')|float(0) +
+              states('sensor.desk_lamp_power')|float(0) +
+              states('sensor.printer_power')|float(0) +
+              states('sensor.office_phone_charger_power')|float(0)) | round(1) }}
+
+      - name: "Total House Power"
+        unit_of_measurement: "W"
+        device_class: power
+        state: >
+          {{ (states('sensor.living_room_total_power')|float(0) +
+              states('sensor.kitchen_total_power')|float(0) +
+              states('sensor.bedroom_total_power')|float(0) +
+              states('sensor.office_total_power')|float(0) +
+              states('sensor.exhaust_fan_power')|float(0) +
+              states('sensor.hair_dryer_power')|float(0) +
+              states('sensor.washing_machine_power')|float(0) +
+              states('sensor.dryer_power')|float(0) +
+              states('sensor.garden_lights_power')|float(0) +
+              states('sensor.ev_charger_power')|float(0) +
+              states('sensor.security_floodlights_power')|float(0) +
+              states('sensor.wifi_router_power')|float(0) +
+              states('sensor.smart_hub_power')|float(0) +
+              states('sensor.nas_server_power')|float(0) +
+              states('sensor.security_cameras_power')|float(0) +
+              states('sensor.white_noise_power')|float(0)) | round(1) }}
+
+# ==================== TEMPLATE SWITCHES (Device Controls) ====================
+switch:
+  - platform: template
+    switches:
+      # === LIVING ROOM ===
+      tv_switch:
+        friendly_name: "TV"
+        value_template: "{{ is_state('input_boolean.sim_tv','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_tv }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_tv, value: 120 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_tv }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_tv, value: 2 }
+
+      sound_bar:
+        friendly_name: "Sound Bar"
+        value_template: "{{ is_state('input_boolean.sim_sound_bar','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_sound_bar }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_sound_bar, value: 40 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_sound_bar }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_sound_bar, value: 0 }
+
+      gaming_console:
+        friendly_name: "Gaming Console"
+        value_template: "{{ is_state('input_boolean.sim_gaming_console','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_gaming_console }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_gaming_console, value: 150 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_gaming_console }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_gaming_console, value: 15 }
+
+      air_conditioner:
+        friendly_name: "Air Conditioner"
+        value_template: "{{ is_state('input_boolean.sim_air_conditioner','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_air_conditioner }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_air_conditioner, value: 1200 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_air_conditioner }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_air_conditioner, value: 0 }
+
+      robot_vacuum:
+        friendly_name: "Robot Vacuum"
+        value_template: "{{ is_state('input_boolean.sim_robot_vacuum','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_robot_vacuum }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_robot_vacuum, value: 30 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_robot_vacuum }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_robot_vacuum, value: 0 }
+
+      # === KITCHEN ===
+      kettle_switch:
+        friendly_name: "Kettle"
+        value_template: "{{ is_state('input_boolean.sim_kettle','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_kettle }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_kettle, value: 1500 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_kettle }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_kettle, value: 0 }
+
+      coffee_maker:
+        friendly_name: "Coffee Maker"
+        value_template: "{{ is_state('input_boolean.sim_coffee_maker','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_coffee_maker }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_coffee_maker, value: 1000 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_coffee_maker }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_coffee_maker, value: 0 }
+
+      microwave:
+        friendly_name: "Microwave"
+        value_template: "{{ is_state('input_boolean.sim_microwave','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_microwave }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_microwave, value: 1000 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_microwave }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_microwave, value: 3 }
+
+      oven:
+        friendly_name: "Oven"
+        value_template: "{{ is_state('input_boolean.sim_oven','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_oven }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_oven, value: 2400 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_oven }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_oven, value: 0 }
+
+      refrigerator:
+        friendly_name: "Refrigerator"
+        value_template: "{{ is_state('input_boolean.sim_refrigerator','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_refrigerator }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_refrigerator, value: 150 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_refrigerator }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_refrigerator, value: 0 }
+
+      dishwasher:
+        friendly_name: "Dishwasher"
+        value_template: "{{ is_state('input_boolean.sim_dishwasher','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_dishwasher }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_dishwasher, value: 1800 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_dishwasher }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_dishwasher, value: 2 }
+
+      toaster:
+        friendly_name: "Toaster"
+        value_template: "{{ is_state('input_boolean.sim_toaster','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_toaster }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_toaster, value: 900 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_toaster }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_toaster, value: 0 }
+
+      slow_cooker:
+        friendly_name: "Slow Cooker"
+        value_template: "{{ is_state('input_boolean.sim_slow_cooker','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_slow_cooker }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_slow_cooker, value: 200 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_slow_cooker }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_slow_cooker, value: 0 }
+
+      range_hood:
+        friendly_name: "Range Hood"
+        value_template: "{{ is_state('input_boolean.sim_range_hood','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_range_hood }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_range_hood, value: 120 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_range_hood }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_range_hood, value: 0 }
+
+      # === LAUNDRY ===
+      washing_machine:
+        friendly_name: "Washing Machine"
+        value_template: "{{ is_state('input_boolean.sim_washing_machine','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_washing_machine }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_washing_machine, value: 500 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_washing_machine }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_washing_machine, value: 1 }
+
+      dryer:
+        friendly_name: "Dryer"
+        value_template: "{{ is_state('input_boolean.sim_dryer','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_dryer }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_dryer, value: 3000 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_dryer }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_dryer, value: 1 }
+
+      # === OUTDOOR / GARAGE ===
+      ev_charger:
+        friendly_name: "EV Charger"
+        value_template: "{{ is_state('input_boolean.sim_ev_charger','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_ev_charger }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_ev_charger, value: 7400 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_ev_charger }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_ev_charger, value: 0 }
+
+      # === INFRASTRUCTURE (Always on, but controllable) ===
+      wifi_router:
+        friendly_name: "WiFi Router"
+        value_template: "{{ is_state('input_boolean.sim_wifi_router','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_wifi_router }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_wifi_router, value: 20 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_wifi_router }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_wifi_router, value: 0 }
+
+      nas_server:
+        friendly_name: "NAS Server"
+        value_template: "{{ is_state('input_boolean.sim_nas_server','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_nas_server }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_nas_server, value: 40 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_nas_server }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_nas_server, value: 0 }
+
+      # === WHITE NOISE (existing) ===
+      whitenoise_switch:
+        friendly_name: "White Noise"
+        value_template: "{{ is_state('input_boolean.sim_whitenoise','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_whitenoise }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_whitenoise, value: 10 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_whitenoise }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_whitenoise, value: 0 }
+
+# ==================== LIGHTS (Virtual Smart Bulbs) ====================
+light:
+  - platform: template
+    lights:
+      floor_lamp:
+        friendly_name: "Floor Lamp"
+        value_template: "{{ is_state('input_boolean.sim_floor_lamp','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_floor_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_floor_lamp, value: 15 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_floor_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_floor_lamp, value: 0 }
+
+      living_room_ceiling:
+        friendly_name: "Living Room Ceiling Lights"
+        value_template: "{{ is_state('input_boolean.sim_ceiling_lights_living','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_ceiling_lights_living }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_ceiling_lights_living, value: 60 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_ceiling_lights_living }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_ceiling_lights_living, value: 0 }
+
+      bedside_lamp:
+        friendly_name: "Bedside Lamp"
+        value_template: "{{ is_state('input_boolean.sim_bedside_lamp','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_bedside_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_bedside_lamp, value: 10 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_bedside_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_bedside_lamp, value: 0 }
+
+      desk_lamp:
+        friendly_name: "Desk Lamp"
+        value_template: "{{ is_state('input_boolean.sim_desk_lamp','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_desk_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_desk_lamp, value: 12 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_desk_lamp }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_desk_lamp, value: 0 }
+
+      garden_lights:
+        friendly_name: "Garden Lights"
+        value_template: "{{ is_state('input_boolean.sim_garden_lights','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_garden_lights }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_garden_lights, value: 50 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_garden_lights }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_garden_lights, value: 0 }
+
+      security_floodlights:
+        friendly_name: "Security Floodlights"
+        value_template: "{{ is_state('input_boolean.sim_security_floodlights','on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            target: { entity_id: input_boolean.sim_security_floodlights }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_security_floodlights, value: 100 }
+        turn_off:
+          - service: input_boolean.turn_off
+            target: { entity_id: input_boolean.sim_security_floodlights }
+          - service: input_number.set_value
+            data: { entity_id: input_number.sim_power_security_floodlights, value: 0 }
+
+# ==================== ROOM GROUPS ====================
+group:
+  living_room_devices:
+    name: "Living Room Devices"
+    entities:
+      - switch.tv_switch
+      - switch.sound_bar
+      - switch.gaming_console
+      - light.floor_lamp
+      - light.living_room_ceiling
+      - switch.air_conditioner
+      - switch.robot_vacuum
+
+  kitchen_devices:
+    name: "Kitchen Devices"
+    entities:
+      - switch.kettle_switch
+      - switch.coffee_maker
+      - switch.microwave
+      - switch.oven
+      - switch.refrigerator
+      - switch.dishwasher
+      - switch.toaster
+      - switch.slow_cooker
+      - switch.range_hood
+
+  bedroom_devices:
+    name: "Bedroom Devices"
+    entities:
+      - light.bedside_lamp
+
+  office_devices:
+    name: "Office Devices"
+    entities:
+      - light.desk_lamp

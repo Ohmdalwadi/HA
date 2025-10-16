@@ -17,3 +17,10 @@ home-assistant.log*
 *.log*
 custom_components/
 www/community/
+
+# Documentation files (except README.md)
+*.pdf
+*.docx
+*.doc
+*.md
+!README.md

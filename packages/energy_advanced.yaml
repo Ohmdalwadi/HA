@@ -1,0 +1,441 @@
+# === ADVANCED ENERGY MANAGEMENT PACKAGE ===
+# Time-of-Use Pricing | Predictions | Cost Analysis | Smart Scheduling
+
+# ==================== TIME-OF-USE (TOU) PRICING ====================
+input_select:
+  tariff_period:
+    name: Current Tariff Period
+    options:
+      - "Peak (17:00-20:00) - $0.50/kWh"
+      - "Shoulder (07:00-17:00, 20:00-22:00) - $0.30/kWh"
+      - "Off-Peak (22:00-07:00) - $0.15/kWh"
+    icon: mdi:cash-clock
+
+input_number:
+  # Tariff rates ($/kWh)
+  tariff_peak:
+    name: Peak Rate
+    min: 0
+    max: 1
+    step: 0.01
+    initial: 0.50
+    unit_of_measurement: "$/kWh"
+    icon: mdi:currency-usd
+
+  tariff_shoulder:
+    name: Shoulder Rate
+    min: 0
+    max: 1
+    step: 0.01
+    initial: 0.30
+    unit_of_measurement: "$/kWh"
+    icon: mdi:currency-usd
+
+  tariff_offpeak:
+    name: Off-Peak Rate
+    min: 0
+    max: 1
+    step: 0.01
+    initial: 0.15
+    unit_of_measurement: "$/kWh"
+    icon: mdi:currency-usd
+
+  # Energy cost targets
+  daily_cost_target:
+    name: Daily Cost Target
+    min: 0
+    max: 50
+    step: 0.50
+    initial: 5.00
+    unit_of_measurement: "$"
+    icon: mdi:target
+
+  monthly_cost_target:
+    name: Monthly Cost Target
+    min: 0
+    max: 500
+    step: 10
+    initial: 150.00
+    unit_of_measurement: "$"
+    icon: mdi:cash-multiple
+
+# ==================== TEMPLATE SENSORS ====================
+template:
+  - sensor:
+      # === CURRENT TARIFF RATE ===
+      - name: "Current Electricity Rate"
+        unit_of_measurement: "$/kWh"
+        state: >
+          {% set h = now().hour %}
+          {% if h >= 17 and h < 20 %}
+            {{ states('input_number.tariff_peak') }}
+          {% elif (h >= 7 and h < 17) or (h >= 20 and h < 22) %}
+            {{ states('input_number.tariff_shoulder') }}
+          {% else %}
+            {{ states('input_number.tariff_offpeak') }}
+          {% endif %}
+        icon: mdi:currency-usd
+
+      # === TARIFF PERIOD NAME ===
+      - name: "Tariff Period Name"
+        state: >
+          {% set h = now().hour %}
+          {% if h >= 17 and h < 20 %}
+            Peak
+          {% elif (h >= 7 and h < 17) or (h >= 20 and h < 22) %}
+            Shoulder
+          {% else %}
+            Off-Peak
+          {% endif %}
+        icon: mdi:clock-outline
+
+      # === MINUTES UNTIL OFF-PEAK ===
+      - name: "Minutes Until Off-Peak"
+        unit_of_measurement: "min"
+        state: >
+          {% set h = now().hour %}
+          {% set m = now().minute %}
+          {% if h >= 22 or h < 7 %}
+            0
+          {% elif h < 17 %}
+            {{ ((17 - h) * 60) - m + 300 }}
+          {% else %}
+            {{ ((22 - h) * 60) - m }}
+          {% endif %}
+        icon: mdi:clock-fast
+
+      # === ENERGY COST CALCULATIONS (Per Device) ===
+      - name: "TV Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.tv_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "Kettle Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.kettle_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "AC Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.air_conditioner_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "Dishwasher Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.dishwasher_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "Washing Machine Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.washing_machine_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "Dryer Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.dryer_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      - name: "EV Charger Energy Cost Today"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.ev_charger_energy_daily') | float(0) * 0.30) | round(2) }}
+        icon: mdi:currency-usd
+
+      # === TOP ENERGY CONSUMERS (Rankings) ===
+      - name: "Top Energy Consumer Today"
+        state: >
+          {% set devices = {
+            'TV': states('sensor.tv_energy_daily') | float(0),
+            'Kettle': states('sensor.kettle_energy_daily') | float(0),
+            'AC': states('sensor.air_conditioner_energy_daily') | float(0),
+            'Dishwasher': states('sensor.dishwasher_energy_daily') | float(0),
+            'Dryer': states('sensor.dryer_energy_daily') | float(0),
+            'EV Charger': states('sensor.ev_charger_energy_daily') | float(0)
+          } %}
+          {{ devices | dictsort(by='value', reverse=true) | first | first }}
+        icon: mdi:podium-gold
+
+      - name: "Top Energy Consumer Value"
+        unit_of_measurement: "kWh"
+        state: >
+          {% set devices = {
+            'TV': states('sensor.tv_energy_daily') | float(0),
+            'Kettle': states('sensor.kettle_energy_daily') | float(0),
+            'AC': states('sensor.air_conditioner_energy_daily') | float(0),
+            'Dishwasher': states('sensor.dishwasher_energy_daily') | float(0),
+            'Dryer': states('sensor.dryer_energy_daily') | float(0),
+            'EV Charger': states('sensor.ev_charger_energy_daily') | float(0)
+          } %}
+          {{ devices | dictsort(by='value', reverse=true) | first | last | round(2) }}
+
+      # === ENERGY PREDICTIONS ===
+      - name: "Predicted Daily Energy Usage"
+        unit_of_measurement: "kWh"
+        state: >
+          {% set current = states('sensor.house_energy_today') | float(0) %}
+          {% set h = now().hour %}
+          {% if h > 0 %}
+            {{ (current / h * 24) | round(1) }}
+          {% else %}
+            {{ states('sensor.house_energy_yesterday') | float(5) }}
+          {% endif %}
+        icon: mdi:crystal-ball
+
+      - name: "Predicted Daily Cost"
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.predicted_daily_energy_usage') | float(0) * 0.30) | round(2) }}
+        icon: mdi:cash-fast
+
+      - name: "Predicted Budget Overage"
+        unit_of_measurement: "kWh"
+        state: >
+          {% set predicted = states('sensor.predicted_daily_energy_usage') | float(0) %}
+          {% set budget = states('input_number.daily_energy_budget_kwh') | float(100) %}
+          {% set diff = predicted - budget %}
+          {{ diff if diff > 0 else 0 | round(1) }}
+        icon: mdi:alert-circle
+
+      # === COST COMPARISONS ===
+      - name: "Cost vs Yesterday"
+        unit_of_measurement: "$"
+        state: >
+          {% set today = states('sensor.energy_cost_today') | float(0) %}
+          {% set yesterday = states('sensor.energy_cost_yesterday') | float(0) %}
+          {{ (today - yesterday) | round(2) }}
+        icon: mdi:compare
+
+      - name: "Cost Savings This Month"
+        unit_of_measurement: "$"
+        state: >
+          {% set target = states('input_number.monthly_cost_target') | float(150) %}
+          {% set actual = states('sensor.house_energy_month') | float(0) * 0.30 %}
+          {{ (target - actual) | round(2) }}
+        icon: mdi:piggy-bank
+
+      # === STANDBY POWER WASTE ===
+      - name: "Estimated Standby Power"
+        unit_of_measurement: "W"
+        state: >
+          {% set standby = 0 %}
+          {% if is_state('switch.tv_switch', 'off') %}
+            {% set standby = standby + 2 %}
+          {% endif %}
+          {% if is_state('switch.gaming_console', 'off') %}
+            {% set standby = standby + 15 %}
+          {% endif %}
+          {% if is_state('switch.microwave', 'off') %}
+            {% set standby = standby + 3 %}
+          {% endif %}
+          {% if is_state('switch.dishwasher', 'off') %}
+            {% set standby = standby + 2 %}
+          {% endif %}
+          {{ standby }}
+        icon: mdi:power-plug-off
+
+      - name: "Annual Standby Cost"
+        unit_of_measurement: "$"
+        state: >
+          {% set standby_w = states('sensor.estimated_standby_power') | float(0) %}
+          {% set annual_kwh = standby_w * 24 * 365 / 1000 %}
+          {{ (annual_kwh * 0.30) | round(2) }}
+        icon: mdi:cash-remove
+
+      # === CARBON FOOTPRINT (Optional) ===
+      - name: "Daily Carbon Footprint"
+        unit_of_measurement: "kg CO2"
+        state: >
+          {% set kwh = states('sensor.house_energy_today') | float(0) %}
+          {{ (kwh * 0.45) | round(2) }}
+        icon: mdi:leaf-off
+
+      - name: "Monthly Carbon Footprint"
+        unit_of_measurement: "kg CO2"
+        state: >
+          {% set kwh = states('sensor.house_energy_month') | float(0) %}
+          {{ (kwh * 0.45) | round(1) }}
+        icon: mdi:earth
+
+# ==================== AUTOMATIONS (Energy Management) ====================
+automation:
+  # 1. Tariff Period Auto-Update
+  - alias: "Energy | Update Tariff Period"
+    id: energy_update_tariff
+    mode: restart
+    trigger:
+      - platform: time_pattern
+        hours: "*"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.tariff_period
+        data:
+          option: >
+            {% set h = now().hour %}
+            {% if h >= 17 and h < 20 %}
+              Peak (17:00-20:00) - $0.50/kWh
+            {% elif (h >= 7 and h < 17) or (h >= 20 and h < 22) %}
+              Shoulder (07:00-17:00, 20:00-22:00) - $0.30/kWh
+            {% else %}
+              Off-Peak (22:00-07:00) - $0.15/kWh
+            {% endif %}
+
+  # 2. High Cost Alert (Peak Usage Warning)
+  - alias: "Energy | Peak Usage Warning"
+    id: energy_peak_warning
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.total_house_power
+        above: 3000
+    condition:
+      - condition: state
+        entity_id: sensor.tariff_period_name
+        state: "Peak"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "⚠️ Peak Rate Alert"
+          message: >
+            High power usage ({{ states('sensor.total_house_power') | round(0) }} W)
+            during PEAK hours ($0.50/kWh). Consider deferring to off-peak.
+
+  # 3. Budget Overage Prediction Warning
+  - alias: "Energy | Budget Overage Warning"
+    id: energy_budget_overage
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.predicted_budget_overage
+        above: 0.5
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Budget Alert 💸"
+          message: >
+            At current rate, you'll exceed budget by
+            {{ states('sensor.predicted_budget_overage') }} kWh
+            ({{ (states('sensor.predicted_budget_overage') | float(0) * 0.30) | round(2) }}$).
+            Consider reducing usage.
+
+  # 4. Daily Energy Report (Morning Summary)
+  - alias: "Energy | Daily Morning Report"
+    id: energy_morning_report
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:00:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Energy Report 📊"
+          message: >
+            Yesterday: {{ states('sensor.house_energy_yesterday') }} kWh
+            ({{ states('sensor.energy_cost_yesterday') }}$)
+
+            Top Consumer: {{ states('sensor.top_energy_consumer_today') }}
+
+            Budget Status: {{ states('sensor.energy_budget_percent') | round(0) }}% used
+
+  # 5. Off-Peak Reminder (for deferred tasks)
+  - alias: "Energy | Off-Peak Starting Soon"
+    id: energy_offpeak_reminder
+    mode: single
+    trigger:
+      - platform: time
+        at: "21:45:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Off-Peak in 15 min ⏰"
+          message: >
+            Off-peak rates start at 22:00 ($0.15/kWh).
+            Good time to run: Dishwasher, Dryer, EV Charger.
+
+  # 6. Standby Power Warning
+  - alias: "Energy | Standby Power Waste Alert"
+    id: energy_standby_warning
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.estimated_standby_power
+        above: 25
+        for: "01:00:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Standby Power Alert 🔌"
+          message: >
+            {{ states('sensor.estimated_standby_power') }} W in standby power.
+            Wasting ${{ states('sensor.annual_standby_cost') }}/year!
+
+  # 7. Monthly Cost Report (1st of month)
+  - alias: "Energy | Monthly Cost Report"
+    id: energy_monthly_report
+    mode: single
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      - condition: template
+        value_template: "{{ now().day == 1 }}"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Monthly Energy Report 📅"
+          message: >
+            Last month: {{ states('sensor.house_energy_month') }} kWh
+
+            Cost: ${{ (states('sensor.house_energy_month') | float(0) * 0.30) | round(2) }}
+
+            Target: ${{ states('input_number.monthly_cost_target') }}
+
+            Savings: ${{ states('sensor.cost_savings_this_month') }}
+
+# ==================== BINARY SENSORS ====================
+binary_sensor:
+  - platform: template
+    sensors:
+      # Is it off-peak time?
+      is_offpeak:
+        friendly_name: "Is Off-Peak Time"
+        value_template: >
+          {% set h = now().hour %}
+          {{ h >= 22 or h < 7 }}
+        icon_template: >
+          {% if is_state('binary_sensor.is_offpeak', 'on') %}
+            mdi:clock-check
+          {% else %}
+            mdi:clock-alert
+          {% endif %}
+
+      # Is it peak time?
+      is_peak:
+        friendly_name: "Is Peak Time"
+        value_template: >
+          {% set h = now().hour %}
+          {{ h >= 17 and h < 20 }}
+        icon_template: >
+          {% if is_state('binary_sensor.is_peak', 'on') %}
+            mdi:alert-circle
+          {% else %}
+            mdi:check-circle
+          {% endif %}
+
+      # Budget exceeded?
+      budget_exceeded:
+        friendly_name: "Budget Exceeded"
+        value_template: >
+          {{ states('sensor.energy_budget_percent') | float(0) > 100 }}
+        icon_template: >
+          {% if is_state('binary_sensor.budget_exceeded', 'on') %}
+            mdi:alert
+          {% else %}
+            mdi:check
+          {% endif %}

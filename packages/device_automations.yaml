@@ -1,0 +1,586 @@
+# === DEVICE-SPECIFIC AUTOMATIONS ===
+# Smart behaviors for 44+ virtual devices
+
+automation:
+  # ==================== KITCHEN AUTOMATIONS ====================
+
+  # 1. Morning Coffee Routine (Weekdays only)
+  - alias: "Kitchen | Morning Coffee Routine"
+    id: kitchen_morning_coffee
+    mode: single
+    trigger:
+      - platform: time
+        at: "07:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_home
+        state: "on"
+      - condition: time
+        weekday: [mon, tue, wed, thu, fri]
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.coffee_maker }
+      - service: persistent_notification.create
+        data:
+          title: "Good Morning ☕"
+          message: "Coffee maker started. Fresh brew in 5 minutes!"
+      - delay: "00:15:00"
+      - service: switch.turn_off
+        target: { entity_id: switch.coffee_maker }
+
+  # 2. Dishwasher Off-Peak Scheduling
+  - alias: "Kitchen | Dishwasher Off-Peak Schedule"
+    id: kitchen_dishwasher_offpeak
+    mode: single
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.energy_budget_percent
+        below: 70
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Energy Saver 💡"
+          message: "Running dishwasher during off-peak hours to save $0.27"
+      - service: switch.turn_on
+        target: { entity_id: switch.dishwasher }
+      - delay: "01:30:00"
+      - service: switch.turn_off
+        target: { entity_id: switch.dishwasher }
+
+  # 3. Refrigerator Always-On Monitor
+  - alias: "Kitchen | Refrigerator Auto-On"
+    id: kitchen_fridge_always_on
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.refrigerator
+        to: "off"
+        for: "00:05:00"
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.refrigerator }
+      - service: persistent_notification.create
+        data:
+          title: "Refrigerator Alert"
+          message: "Refrigerator was off! Auto-enabled to prevent food spoilage."
+
+  # 4. Oven Safety Auto-Off (2 hours max)
+  - alias: "Kitchen | Oven Safety Timeout"
+    id: kitchen_oven_safety
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.oven
+        to: "on"
+        for: "02:00:00"
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.oven }
+      - service: persistent_notification.create
+        data:
+          title: "Safety Alert 🚨"
+          message: "Oven has been on for 2 hours. Auto-disabled for safety."
+
+  # ==================== LIVING ROOM AUTOMATIONS ====================
+
+  # 5. AC Auto-Off When Away
+  - alias: "Climate | AC Auto-Off When Away"
+    id: climate_ac_away
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.mode_away
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: switch.air_conditioner
+        state: "on"
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.air_conditioner }
+      - service: persistent_notification.create
+        data:
+          title: "Energy Saver 💨"
+          message: "AC turned off (Away mode). Saving ~$1.20/hour."
+
+  # 6. Gaming Console Screen Time Limit
+  - alias: "Entertainment | Gaming Console 2-Hour Reminder"
+    id: entertainment_gaming_limit
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.gaming_console
+        to: "on"
+        for: "02:00:00"
+    condition:
+      - condition: time
+        after: "18:00:00"
+        before: "23:00:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Screen Time Reminder 🎮"
+          message: "Gaming console has been on for 2 hours. Consider taking a break!"
+
+  # 7. Robot Vacuum Scheduled Cleaning
+  - alias: "Cleaning | Robot Vacuum Daily Clean"
+    id: cleaning_robot_schedule
+    mode: single
+    trigger:
+      - platform: time
+        at: "14:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_away
+        state: "on"
+      - condition: time
+        weekday: [mon, wed, fri]
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.robot_vacuum }
+      - delay: "01:00:00"
+      - service: switch.turn_off
+        target: { entity_id: switch.robot_vacuum }
+      - service: persistent_notification.create
+        data:
+          title: "Cleaning Complete 🧹"
+          message: "Robot vacuum finished cleaning cycle."
+
+  # 8. TV + Sound Bar Auto-Pair
+  - alias: "Entertainment | TV Sound Bar Auto-Pair"
+    id: entertainment_tv_soundbar_pair
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.tv_switch
+        to: "on"
+    action:
+      - delay: "00:00:02"
+      - service: switch.turn_on
+        target: { entity_id: switch.sound_bar }
+
+  # 9. TV + Sound Bar Auto-Off Together
+  - alias: "Entertainment | TV Sound Bar Auto-Off"
+    id: entertainment_tv_soundbar_off
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.tv_switch
+        to: "off"
+    action:
+      - delay: "00:00:05"
+      - service: switch.turn_off
+        target: { entity_id: switch.sound_bar }
+
+  # ==================== LAUNDRY AUTOMATIONS ====================
+
+  # 10. Washing Machine Cycle Complete Notification
+  - alias: "Laundry | Washing Machine Complete"
+    id: laundry_washer_complete
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.washing_machine
+        to: "on"
+        for: "01:00:00"
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.washing_machine }
+      - service: persistent_notification.create
+        data:
+          title: "Laundry Done 👕"
+          message: "Washing machine cycle complete. Time to hang dry or use dryer!"
+
+  # 11. Dryer Off-Peak Scheduling
+  - alias: "Laundry | Dryer Off-Peak Delay"
+    id: laundry_dryer_offpeak
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: switch.dryer
+        to: "on"
+    condition:
+      - condition: time
+        after: "17:00:00"
+        before: "22:00:00"
+      - condition: numeric_state
+        entity_id: sensor.energy_budget_percent
+        above: 60
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.dryer }
+      - service: persistent_notification.create
+        data:
+          title: "Energy Saver 💰"
+          message: "Delaying dryer until 22:00 (off-peak) to save $0.55"
+      - wait_for_trigger:
+          - platform: time
+            at: "22:00:00"
+      - service: switch.turn_on
+        target: { entity_id: switch.dryer }
+
+  # 12. Dryer Cycle Complete (60 minutes)
+  - alias: "Laundry | Dryer Cycle Complete"
+    id: laundry_dryer_complete
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.dryer
+        to: "on"
+        for: "01:00:00"
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.dryer }
+      - service: persistent_notification.create
+        data:
+          title: "Dryer Complete 🧺"
+          message: "Dryer cycle finished. Please remove clothes to prevent wrinkles!"
+
+  # ==================== OUTDOOR AUTOMATIONS ====================
+
+  # 13. Garden Lights Auto-On at Sunset
+  - alias: "Outdoor | Garden Lights Sunset"
+    id: outdoor_garden_sunset
+    mode: single
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_home
+        state: "on"
+    action:
+      - service: light.turn_on
+        target: { entity_id: light.garden_lights }
+      - service: persistent_notification.create
+        data:
+          title: "Outdoor Lighting 🌙"
+          message: "Garden lights enabled for evening ambience."
+
+  # 14. Garden Lights Auto-Off at Midnight
+  - alias: "Outdoor | Garden Lights Midnight Off"
+    id: outdoor_garden_midnight
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:00:00"
+    action:
+      - service: light.turn_off
+        target: { entity_id: light.garden_lights }
+
+  # 15. EV Charger Smart Charging
+  - alias: "Garage | EV Smart Charging Off-Peak"
+    id: garage_ev_smart_charge
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.ev_charger
+        to: "on"
+    condition:
+      - condition: time
+        after: "17:00:00"
+        before: "22:00:00"
+    action:
+      - service: switch.turn_off
+        target: { entity_id: switch.ev_charger }
+      - service: persistent_notification.create
+        data:
+          title: "EV Charging ⚡"
+          message: "Delaying EV charge until 22:00 (off-peak) to save $2.60/charge"
+      - wait_for_trigger:
+          - platform: time
+            at: "22:00:00"
+      - service: switch.turn_on
+        target: { entity_id: switch.ev_charger }
+
+  # ==================== OFFICE AUTOMATIONS ====================
+
+  # 16. WFH Office Auto-On (Weekday Mornings)
+  - alias: "Office | WFH Morning Startup"
+    id: office_wfh_morning
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:45:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.overlay_wfh
+        state: "on"
+      - condition: time
+        weekday: [mon, tue, wed, thu, fri]
+    action:
+      - service: light.turn_on
+        target: { entity_id: light.desk_lamp }
+      - service: persistent_notification.create
+        data:
+          title: "Good Morning 💼"
+          message: "Office setup ready for work. Have a productive day!"
+
+  # 17. Office Auto-Off (End of Day)
+  - alias: "Office | End of Day Auto-Off"
+    id: office_end_of_day
+    mode: single
+    trigger:
+      - platform: time
+        at: "18:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.overlay_wfh
+        state: "off"
+    action:
+      - service: light.turn_off
+        target: { entity_id: light.desk_lamp }
+      - service: persistent_notification.create
+        data:
+          title: "Office Shutdown 🌆"
+          message: "Workday complete. Office devices powered down."
+
+  # ==================== BEDROOM AUTOMATIONS ====================
+
+  # 18. Bedside Lamp Auto-Dim at Night
+  - alias: "Bedroom | Bedside Lamp Night Mode"
+    id: bedroom_lamp_night
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.mode_sleep
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: light.bedside_lamp
+        state: "on"
+    action:
+      - delay: "00:02:00"
+      - service: light.turn_off
+        target: { entity_id: light.bedside_lamp }
+      - service: persistent_notification.create
+        data:
+          title: "Good Night 😴"
+          message: "Sleep mode active. Lights off for restful sleep."
+
+  # ==================== INFRASTRUCTURE AUTOMATIONS ====================
+
+  # 19. WiFi Router Always-On Protection
+  - alias: "Infrastructure | WiFi Always-On"
+    id: infrastructure_wifi_protection
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.wifi_router
+        to: "off"
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.wifi_router }
+      - service: persistent_notification.create
+        data:
+          title: "Network Alert 🌐"
+          message: "WiFi router auto-enabled. Cannot disable critical infrastructure!"
+
+  # 20. Smart Hub Always-On Protection
+  - alias: "Infrastructure | Smart Hub Always-On"
+    id: infrastructure_hub_protection
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.sim_smart_hub
+        to: "off"
+    action:
+      - service: input_boolean.turn_on
+        target: { entity_id: input_boolean.sim_smart_hub }
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_smart_hub, value: 5 }
+
+  # ==================== ENERGY MANAGEMENT ====================
+
+  # 21. High Power Alert (>5kW)
+  - alias: "Energy | High Power Alert"
+    id: energy_high_power_alert
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.total_house_power
+        above: 5000
+        for: "00:05:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "⚠️ High Power Usage"
+          message: >
+            Total house power is {{ states('sensor.total_house_power') | round(0) }} W.
+            Consider turning off non-essential devices.
+
+  # 22. All Lights Off at Midnight (if no one home)
+  - alias: "Energy | Midnight Lights Off"
+    id: energy_midnight_lights_off
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:30:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_away
+        state: "on"
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: all
+      - service: persistent_notification.create
+        data:
+          title: "Energy Saver 💡"
+          message: "All lights turned off automatically (Away mode + midnight)."
+
+  # ==================== BATHROOM AUTOMATIONS ====================
+
+  # 23. Exhaust Fan Auto-Off (30 min timeout)
+  - alias: "Bathroom | Exhaust Fan Timeout"
+    id: bathroom_exhaust_timeout
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.sim_exhaust_fan
+        to: "on"
+        for: "00:30:00"
+    action:
+      - service: input_boolean.turn_off
+        target: { entity_id: input_boolean.sim_exhaust_fan }
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_exhaust_fan, value: 0 }
+      - service: persistent_notification.create
+        data:
+          title: "Bathroom"
+          message: "Exhaust fan auto-off after 30 minutes."
+
+  # ==================== OFFICE DEVICE PAIRING ====================
+
+  # 24. Desktop PC Auto-Enables Monitors
+  - alias: "Office | Desktop PC Monitor Pairing"
+    id: office_desktop_monitors_on
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.sim_desktop_computer
+        to: "on"
+    action:
+      - delay: "00:00:03"
+      - service: input_boolean.turn_on
+        target:
+          entity_id:
+            - input_boolean.sim_monitor_1
+            - input_boolean.sim_monitor_2
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_monitor_1, value: 30 }
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_monitor_2, value: 30 }
+
+  # 25. Desktop PC Off Auto-Disables Monitors
+  - alias: "Office | Desktop PC Monitor Off"
+    id: office_desktop_monitors_off
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.sim_desktop_computer
+        to: "off"
+    action:
+      - delay: "00:00:02"
+      - service: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.sim_monitor_1
+            - input_boolean.sim_monitor_2
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_monitor_1, value: 0 }
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_monitor_2, value: 0 }
+
+  # ==================== SCENE-BASED AUTOMATIONS ====================
+
+  # 26. Movie Night Scene Auto-Trigger
+  - alias: "Scene | Movie Night Auto-Trigger"
+    id: scene_movie_night_trigger
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: switch.tv_switch
+        to: "on"
+    condition:
+      - condition: time
+        after: "19:00:00"
+        before: "23:59:59"
+      - condition: state
+        entity_id: input_boolean.mode_home
+        state: "on"
+    action:
+      - service: light.turn_off
+        target: { entity_id: light.living_room_ceiling }
+      - service: light.turn_on
+        target: { entity_id: light.floor_lamp }
+
+  # 27. Morning Routine - Kitchen Devices
+  - alias: "Scene | Morning Kitchen Routine"
+    id: scene_morning_kitchen
+    mode: single
+    trigger:
+      - platform: time
+        at: "06:30:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_home
+        state: "on"
+      - condition: time
+        weekday: [mon, tue, wed, thu, fri]
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.refrigerator }
+      - service: persistent_notification.create
+        data:
+          title: "Good Morning 🌅"
+          message: "Kitchen ready. Coffee maker will start at 07:00."
+
+  # ==================== STANDBY POWER REDUCTION ====================
+
+  # 28. Gaming Console Standby Power Reduction
+  - alias: "Energy | Gaming Console Standby Reduction"
+    id: energy_gaming_standby
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.gaming_console
+        to: "off"
+        for: "01:00:00"
+    action:
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_gaming_console, value: 0 }
+      - service: persistent_notification.create
+        data:
+          title: "Energy Saver ⚡"
+          message: "Gaming console entered deep sleep (0W standby)."
+
+  # 29. Microwave Standby Power Reduction
+  - alias: "Energy | Microwave Standby Power"
+    id: energy_microwave_standby
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.microwave
+        to: "off"
+        for: "00:30:00"
+    action:
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_microwave, value: 0 }
+
+  # 30. Dishwasher Standby Power Reduction
+  - alias: "Energy | Dishwasher Standby Power"
+    id: energy_dishwasher_standby
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: switch.dishwasher
+        to: "off"
+        for: "00:30:00"
+    action:
+      - service: input_number.set_value
+        data: { entity_id: input_number.sim_power_dishwasher, value: 0 }

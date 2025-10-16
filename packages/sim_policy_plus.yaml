@@ -98,6 +98,32 @@ template:
           {% set wn = states('sensor.whitenoise_energy_daily')|float(0) %}
           {{ (tv + kt + wn) | round(3) }}
 
+      # Statistics sensors for energy tracking
+      - name: Energy Cost Today
+        unit_of_measurement: "$"
+        state: >
+          {% set kwh = states('sensor.house_energy_today')|float(0) %}
+          {% set tariff = states('input_number.tariff_price')|float(0.30) %}
+          {{ (kwh * tariff) | round(2) }}
+
+      - name: Energy Budget Remaining
+        unit_of_measurement: "kWh"
+        state: >
+          {% set used = states('sensor.house_energy_today')|float(0) %}
+          {% set budget = states('input_number.daily_energy_budget_kwh')|float(5.0) %}
+          {{ (budget - used) | round(3) }}
+
+      - name: Energy Budget Percent
+        unit_of_measurement: "%"
+        state: >
+          {% set used = states('sensor.house_energy_today')|float(0) %}
+          {% set budget = states('input_number.daily_energy_budget_kwh')|float(5.0) %}
+          {% if budget > 0 %}
+            {{ ((used / budget) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+
 # Virtual actuators (template switches)
 switch:
   - platform: template
@@ -177,15 +203,39 @@ utility_meter:
 # Scenes (virtual ambience)
 scene:
   - name: Home Bright
-    entities: {}
+    entities:
+      switch.tv_switch: off
+      switch.whitenoise_switch: off
+      input_number.sim_temp_lounge: 22
+      input_number.sim_temp_bed: 20
+
   - name: Evening Relax
-    entities: {}
+    entities:
+      switch.tv_switch: on
+      switch.whitenoise_switch: off
+      input_number.sim_temp_lounge: 21
+      input_number.sim_temp_bed: 19
+
   - name: Night Minimal
-    entities: {}
+    entities:
+      switch.tv_switch: off
+      switch.whitenoise_switch: off
+      switch.kettle_switch: off
+      input_number.sim_temp_lounge: 18
+      input_number.sim_temp_bed: 17
+
   - name: WFH Focus
-    entities: {}
+    entities:
+      switch.tv_switch: off
+      switch.whitenoise_switch: off
+      input_number.sim_temp_lounge: 21
+      input_number.sim_temp_bed: 20
+
   - name: Pet Calm
-    entities: {}
+    entities:
+      switch.tv_switch: off
+      input_number.sim_temp_lounge: 22
+      input_number.sim_temp_bed: 22
 
 # ====================== AUTOMATIONS ======================
 automation:
@@ -289,7 +339,17 @@ automation:
         {% set s = state_attr('input_datetime.quiet_start','timestamp') %}
         {% set e = state_attr('input_datetime.quiet_end','timestamp') %}
         {% set nowts = now().timestamp() %}
-        {{ s and e and (nowts >= s or nowts <= e) }}
+        {% if s and e %}
+          {% if s > e %}
+            {# Wraps midnight: e.g., 23:00 -> 06:00 #}
+            {{ nowts >= s or nowts <= e }}
+          {% else %}
+            {# Same day: e.g., 08:00 -> 18:00 #}
+            {{ nowts >= s and nowts <= e }}
+          {% endif %}
+        {% else %}
+          false
+        {% endif %}
   action:
     - service: persistent_notification.create
       data: { title: "Safety", message: "Kettle on too long during quiet hours → turning off." }
@@ -331,6 +391,20 @@ automation:
       target: { entity_id: switch.tv_switch }
     - service: persistent_notification.create
       data: { title: "Policy", message: "Fun device blocked due to energy policy." }
+
+- alias: Energy | Daily Budget Reset
+  mode: single
+  trigger:
+    - platform: time
+      at: "00:00:01"
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.block_fun
+    - service: persistent_notification.create
+      data:
+        title: "Energy Budget"
+        message: "Daily energy budget reset. New day started!"
 
 # E) WFH overlay: focus scene, DND, doorbell mute, breaks, meeting DND
 - alias: WFH | Overlay On
@@ -386,7 +460,7 @@ automation:
 - alias: WFH | Break Reminder
   trigger:
     - platform: time_pattern
-      minutes: "/1"
+      minutes: "/30"
   condition:
     - condition: state
       entity_id: input_boolean.overlay_wfh
@@ -465,6 +539,26 @@ automation:
     - service: persistent_notification.create
       data: { title: "Pet Calm", message: "Barking detected → White noise enabled." }
 
+- alias: Pet | Bark Calming Auto-Off
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dog_barking
+      to: "off"
+      for: "00:05:00"
+  condition:
+    - condition: state
+      entity_id: input_boolean.overlay_pet_home
+      state: "on"
+    - condition: state
+      entity_id: switch.whitenoise_switch
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target: { entity_id: switch.whitenoise_switch }
+    - service: persistent_notification.create
+      data: { title: "Pet Calm", message: "Barking stopped for 5 min → White noise disabled." }
+
 - alias: Pet | Doorbell Calming
   mode: restart
   trigger:
@@ -536,6 +630,72 @@ automation:
               data:
                 title: "Security"
                 message: "Sleep → Both doors locked."
+
+# H) Presence detection using motion sensors
+- alias: Presence | Auto-Away Detection
+  mode: single
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.hall_motion
+        - binary_sensor.lounge_motion
+        - binary_sensor.bedroom_motion
+      to: 'off'
+      for:
+        hours: 2
+  condition:
+    - condition: state
+      entity_id: input_boolean.mode_home
+      state: "on"
+    - condition: template
+      value_template: >
+        {{ is_state('binary_sensor.hall_motion','off')
+           and is_state('binary_sensor.lounge_motion','off')
+           and is_state('binary_sensor.bedroom_motion','off') }}
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Presence Detection"
+        message: "No motion detected for 2 hours. Consider switching to Away mode?"
+
+- alias: Presence | Welcome Home Motion
+  mode: single
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.hall_motion
+        - binary_sensor.lounge_motion
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: input_boolean.mode_away
+      state: "on"
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Presence Detection"
+        message: "Motion detected while in Away mode. Welcome home!"
+
+- alias: Presence | Sleep Motion Alert
+  mode: single
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.hall_motion
+        - binary_sensor.lounge_motion
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: input_boolean.mode_sleep
+      state: "on"
+    - condition: time
+      after: "23:00:00"
+      before: "06:00:00"
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Sleep Mode"
+        message: "Motion detected during sleep hours. Security check recommended."
 
 # --- Template locks (use the helpers above) ---
 lock:
