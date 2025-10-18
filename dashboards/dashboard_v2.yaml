@@ -37,13 +37,15 @@ views:
               - type: template
                 icon: mdi:home-account
                 content: |
-                  {{ 'Home' if is_state('input_boolean.mode_home','on')
+                  {{ 'Vacation' if is_state('input_boolean.mode_vacation','on')
+                     else 'Home' if is_state('input_boolean.mode_home','on')
                      else 'Guest' if is_state('input_boolean.mode_guest','on')
                      else 'Sleep' if is_state('input_boolean.mode_sleep','on')
                      else 'Away' if is_state('input_boolean.mode_away','on')
                      else 'No Mode' }}
                 icon_color: |
-                  {{ 'green' if is_state('input_boolean.mode_home','on')
+                  {{ 'cyan' if is_state('input_boolean.mode_vacation','on')
+                     else 'green' if is_state('input_boolean.mode_home','on')
                      else 'purple' if is_state('input_boolean.mode_guest','on')
                      else 'blue' if is_state('input_boolean.mode_sleep','on')
                      else 'amber' if is_state('input_boolean.mode_away','on')
@@ -608,6 +610,18 @@ views:
               target:
                 entity_id: input_boolean.mode_away
 
+          - type: custom:mushroom-template-card
+            primary: Vacation
+            secondary: Extended Away
+            icon: mdi:airplane
+            icon_color: >
+              {{ 'cyan' if is_state('input_boolean.mode_vacation','on') else 'grey' }}
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.mode_vacation
+
       - type: grid
         title: Overlays
         columns: 2
@@ -958,3 +972,685 @@ views:
             name: NAS
             icon: mdi:server
             layout: vertical
+
+  # ==================== VOICE CONTROL ====================
+  - title: Voice Control
+    path: voice
+    icon: mdi:microphone
+    type: sections
+    background: >
+      linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Voice Assistant
+            subtitle: Virtual voice command simulation
+
+      - type: grid
+        title: Quick Voice Commands
+        columns: 2
+        cards:
+          - type: custom:mushroom-select-card
+            entity: input_select.voice_command_quick
+            name: Quick Commands
+            icon: mdi:microphone-message
+            fill_container: true
+
+          - type: custom:mushroom-entity-card
+            entity: input_text.voice_response
+            name: Last Response
+            icon: mdi:speaker
+            icon_color: blue
+
+      - type: grid
+        title: Custom Voice Command
+        cards:
+          - type: custom:mushroom-text-card
+            entity: input_text.voice_command
+            name: Type Command
+            icon: mdi:microphone-variant
+
+      - type: grid
+        title: Supported Commands
+        cards:
+          - type: markdown
+            content: |
+              **🎤 Supported Voice Commands:**
+
+              **Lights:**
+              - "Turn on all lights"
+              - "Turn off all lights"
+
+              **Security:**
+              - "Lock all doors"
+              - "Unlock all doors"
+
+              **Modes:**
+              - "Start WFH mode"
+              - "Start vacation mode"
+              - "Activate pet mode"
+
+              **Routines:**
+              - "Good morning" → Home mode + bright scene
+              - "Good night" → Sleep mode + lock doors
+              - "I'm leaving" → Away mode
+              - "I'm home" → Home mode
+
+  # ==================== WEATHER SIMULATION ====================
+  - title: Weather
+    path: weather
+    icon: mdi:weather-partly-cloudy
+    type: sections
+    background: >
+      linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Weather Simulation
+            subtitle: "{{ states('input_text.sim_weather_condition') }} • {{ states('sensor.outside_temperature') }}°C"
+
+      - type: grid
+        title: Weather Presets
+        cards:
+          - type: custom:mushroom-select-card
+            entity: input_select.weather_preset
+            name: Quick Presets
+            icon: mdi:weather-partly-cloudy
+            fill_container: true
+
+      - type: grid
+        title: Current Conditions
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.outside_temperature
+            name: Temperature
+            icon: mdi:thermometer
+            icon_color: >
+              {% set temp = states('sensor.outside_temperature') | float(20) %}
+              {% if temp > 30 %}red
+              {% elif temp < 10 %}blue
+              {% else %}green
+              {% endif %}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.feels_like_temperature
+            name: Feels Like
+            icon: mdi:thermometer-alert
+            icon_color: amber
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.outside_humidity
+            name: Humidity
+            icon: mdi:water-percent
+            icon_color: blue
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.wind_speed
+            name: Wind Speed
+            icon: mdi:weather-windy
+            icon_color: >
+              {{ 'red' if states('sensor.wind_speed')|float > 30 else 'green' }}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.rainfall
+            name: Rainfall
+            icon: mdi:weather-rainy
+            icon_color: >
+              {{ 'blue' if states('sensor.rainfall')|float > 1 else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.uv_index
+            name: UV Index
+            icon: mdi:white-balance-sunny
+            icon_color: >
+              {% set uv = states('sensor.uv_index') | float(0) %}
+              {% if uv > 7 %}red
+              {% elif uv > 5 %}amber
+              {% else %}green
+              {% endif %}
+
+      - type: grid
+        title: Weather Alerts
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.weather_is_hot
+            name: Heat Alert
+            icon: mdi:thermometer-alert
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.weather_is_hot','on') else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.weather_is_rainy
+            name: Rain Alert
+            icon: mdi:weather-rainy
+            icon_color: >
+              {{ 'blue' if is_state('binary_sensor.weather_is_rainy','on') else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.weather_is_windy
+            name: Wind Alert
+            icon: mdi:weather-windy
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.weather_is_windy','on') else 'grey' }}
+
+      - type: grid
+        title: Manual Weather Controls
+        columns: 2
+        cards:
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_outside_temp
+            name: Temperature
+            icon: mdi:thermometer
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_humidity
+            name: Humidity
+            icon: mdi:water-percent
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_wind_speed
+            name: Wind Speed
+            icon: mdi:weather-windy
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_rainfall
+            name: Rainfall
+            icon: mdi:weather-rainy
+            display_mode: buttons
+
+  # ==================== CALENDAR & MEETINGS ====================
+  - title: Calendar
+    path: calendar
+    icon: mdi:calendar
+    type: sections
+    background: >
+      linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Calendar & Meetings
+            subtitle: WFH meeting integration
+
+      - type: grid
+        title: Meeting Status
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.calendar_meeting_active
+            name: Meeting Active
+            icon: mdi:calendar-clock
+            icon_color: >
+              {{ 'green' if is_state('binary_sensor.calendar_meeting_active','on') else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.meeting_now
+            name: Meeting Mode
+            icon: mdi:video
+            icon_color: >
+              {{ 'red' if is_state('input_boolean.meeting_now','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Next Meeting
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_text.calendar_next_meeting_title
+            name: Meeting Title
+            icon: mdi:text
+
+          - type: entities
+            entities:
+              - entity: input_datetime.calendar_meeting_start
+                name: Meeting Start
+              - entity: input_datetime.calendar_meeting_end
+                name: Meeting End
+
+      - type: grid
+        title: Info
+        cards:
+          - type: markdown
+            content: |
+              **📅 How It Works:**
+
+              1. Set meeting title and times
+              2. When WFH overlay is ON and meeting time arrives:
+                 - `meeting_now` auto-enables
+                 - Extra DND activated
+                 - 5-min advance warning sent
+              3. Meeting auto-ends when time expires
+
+  # ==================== VACATION MODE ====================
+  - title: Vacation
+    path: vacation
+    icon: mdi:airplane
+    type: sections
+    background: >
+      linear-gradient(135deg, #fa709a 0%, #fee140 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Vacation Mode
+            subtitle: Extended away with security features
+
+      - type: grid
+        title: Vacation Status
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.mode_vacation
+            name: Vacation Mode
+            icon: mdi:airplane
+            icon_color: >
+              {{ 'green' if is_state('input_boolean.mode_vacation','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.vacation_active
+            name: Date-Based Active
+            icon: mdi:calendar-check
+            icon_color: >
+              {{ 'green' if is_state('binary_sensor.vacation_active','on') else 'grey' }}
+
+      - type: grid
+        title: Vacation Dates
+        cards:
+          - type: entities
+            entities:
+              - entity: input_datetime.vacation_start_date
+                name: Start Date
+              - entity: input_datetime.vacation_end_date
+                name: End Date
+              - entity: input_number.vacation_days_remaining
+                name: Days Remaining
+
+      - type: grid
+        title: Vacation Features
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.vacation_randomize_lights
+            name: Light Randomization
+            icon: mdi:lightbulb-auto
+            icon_color: amber
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.vacation_collect_packages
+            name: Package Collected
+            icon: mdi:package-variant
+            icon_color: brown
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Security
+        cards:
+          - type: markdown
+            content: |
+              **✈️ Vacation Mode Features:**
+
+              - All doors locked
+              - Energy saver mode (16°C)
+              - Light randomization
+              - Package delivery detection
+              - Daily 12pm check-in notifications
+              - Doorbell activity alerts
+
+  # ==================== MULTIPLE PETS ====================
+  - title: Pets
+    path: pets
+    icon: mdi:dog
+    type: sections
+    background: >
+      linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Pet Management
+            subtitle: "{{ states('sensor.pets_at_home_count') }} pets at home"
+
+      - type: grid
+        title: Pet Status
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.pet_max_home
+            name: Max at Home
+            icon: mdi:dog
+            icon_color: >
+              {{ 'green' if is_state('input_boolean.pet_max_home','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.pet_buddy_home
+            name: Buddy at Home
+            icon: mdi:dog
+            icon_color: >
+              {{ 'blue' if is_state('input_boolean.pet_buddy_home','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Bark Levels
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.max_bark_level
+            name: Max Bark
+            icon: mdi:dog
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.max_barking','on') else 'green' }}
+            secondary_info: state
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.buddy_bark_level
+            name: Buddy Bark
+            icon: mdi:dog
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.buddy_barking','on') else 'green' }}
+            secondary_info: state
+
+          - type: custom:mushroom-number-card
+            entity: input_number.pet_max_bark_db
+            name: Max Bark Control
+            icon: mdi:volume-high
+            display_mode: slider
+
+          - type: custom:mushroom-number-card
+            entity: input_number.pet_buddy_bark_db
+            name: Buddy Bark Control
+            icon: mdi:volume-high
+            display_mode: slider
+
+      - type: grid
+        title: Barking Alerts
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.max_barking
+            name: Max Barking
+            icon: mdi:dog
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.max_barking','on') else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.buddy_barking
+            name: Buddy Barking
+            icon: mdi:dog
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.buddy_barking','on') else 'grey' }}
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.any_pet_barking
+            name: Any Pet Barking
+            icon: mdi:dog
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.any_pet_barking','on') else 'grey' }}
+
+      - type: grid
+        title: Feeding Schedule
+        columns: 2
+        cards:
+          - type: custom:mushroom-number-card
+            entity: input_number.pet_feeding_hour_morning
+            name: Morning Feed Time
+            icon: mdi:clock-outline
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.pet_feeding_hour_evening
+            name: Evening Feed Time
+            icon: mdi:clock-outline
+            display_mode: buttons
+
+      - type: grid
+        title: Last Fed
+        cards:
+          - type: entities
+            entities:
+              - entity: input_datetime.pet_last_fed_max
+                name: Max Last Fed
+              - entity: input_datetime.pet_last_fed_buddy
+                name: Buddy Last Fed
+
+      - type: grid
+        title: Feeding Alerts
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.max_feeding_overdue
+            name: Max Overdue
+            icon: mdi:alert-circle
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.max_feeding_overdue','on') else 'green' }}
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.buddy_feeding_overdue
+            name: Buddy Overdue
+            icon: mdi:alert-circle
+            icon_color: >
+              {{ 'red' if is_state('binary_sensor.buddy_feeding_overdue','on') else 'green' }}
+
+      - type: grid
+        title: Calming Controls
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: switch.whitenoise_switch
+            name: White Noise
+            icon: mdi:speaker
+            icon_color: >
+              {{ 'blue' if is_state('switch.whitenoise_switch','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+  # ==================== ZONE PRESENCE ====================
+  - title: Zones
+    path: zones
+    icon: mdi:map-marker-radius
+    type: sections
+    background: >
+      linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Zone-Based Presence
+            subtitle: "Current: {{ states('sensor.current_presence_zone') }}"
+
+      - type: grid
+        title: Presence Zones
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.presence_upstairs
+            name: Upstairs
+            icon: mdi:stairs-up
+            icon_color: >
+              {{ 'green' if is_state('input_boolean.presence_upstairs','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.presence_downstairs
+            name: Downstairs
+            icon: mdi:stairs-down
+            icon_color: >
+              {{ 'blue' if is_state('input_boolean.presence_downstairs','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.presence_outside
+            name: Outside
+            icon: mdi:tree
+            icon_color: >
+              {{ 'amber' if is_state('input_boolean.presence_outside','on') else 'grey' }}
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Presence Status
+        columns: 2
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.current_presence_zone
+            name: Current Zone
+            icon: mdi:map-marker
+            icon_color: green
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.someone_home
+            name: Someone Home
+            icon: mdi:home-account
+            icon_color: >
+              {{ 'green' if is_state('binary_sensor.someone_home','on') else 'red' }}
+
+      - type: grid
+        title: Zone Info
+        cards:
+          - type: markdown
+            content: |
+              **🗺️ Zone-Based Presence:**
+
+              **How It Works:**
+              - Only ONE zone can be active at a time
+              - Moving to new zone auto-deactivates others
+              - If all zones OFF for 10 min → Auto-Away
+              - Returning to any zone → Auto-Home
+
+              **Zones:**
+              - 🏠 **Upstairs**: Bedrooms, bathrooms
+              - 🏠 **Downstairs**: Living, kitchen, office
+              - 🌳 **Outside**: Garden, garage, yard
+
+              **Security:**
+              - Nighttime outside alert (10pm-6am)
+
+  # ==================== SIMULATION CONTROLS ====================
+  - title: Simulation
+    path: simulation
+    icon: mdi:test-tube
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Simulation Controls
+            subtitle: Virtual sensors for testing
+
+      - type: grid
+        title: Motion Sensors
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_motion_hall
+            name: Hall Motion
+            icon: mdi:motion-sensor
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_motion_lounge
+            name: Lounge Motion
+            icon: mdi:motion-sensor
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_motion_bed
+            name: Bedroom Motion
+            icon: mdi:motion-sensor
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Doors & Doorbell
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_door_front
+            name: Front Door
+            icon: mdi:door
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_doorbell
+            name: Doorbell
+            icon: mdi:doorbell
+            tap_action:
+              action: toggle
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.sim_dog_door
+            name: Dog Door
+            icon: mdi:door
+            tap_action:
+              action: toggle
+
+      - type: grid
+        title: Temperature Simulation
+        columns: 2
+        cards:
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_temp_lounge
+            name: Lounge Temp
+            icon: mdi:thermometer
+            display_mode: slider
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_temp_bed
+            name: Bedroom Temp
+            icon: mdi:thermometer
+            display_mode: slider
+
+      - type: grid
+        title: Power Simulation
+        columns: 3
+        cards:
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_power_tv
+            name: TV Power
+            icon: mdi:television
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_power_kettle
+            name: Kettle Power
+            icon: mdi:kettle
+            display_mode: buttons
+
+          - type: custom:mushroom-number-card
+            entity: input_number.sim_power_whitenoise
+            name: White Noise Power
+            icon: mdi:speaker
+            display_mode: buttons
+
+      - type: grid
+        title: Mobile Notifications
+        cards:
+          - type: custom:mushroom-text-card
+            entity: input_text.notification_last_action
+            name: Simulate Mobile Action
+            icon: mdi:cellphone-message
+
+          - type: custom:mushroom-entity-card
+            entity: input_boolean.notification_action_received
+            name: Action Confirmed
+            icon: mdi:check-circle
+            icon_color: >
+              {{ 'green' if is_state('input_boolean.notification_action_received','on') else 'grey' }}

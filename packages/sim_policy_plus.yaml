@@ -206,36 +206,44 @@ scene:
     entities:
       switch.tv_switch: off
       switch.whitenoise_switch: off
-      input_number.sim_temp_lounge: 22
-      input_number.sim_temp_bed: 20
+      input_number.sim_temp_lounge: "22"
+      input_number.sim_temp_bed: "20"
 
   - name: Evening Relax
     entities:
       switch.tv_switch: on
       switch.whitenoise_switch: off
-      input_number.sim_temp_lounge: 21
-      input_number.sim_temp_bed: 19
+      input_number.sim_temp_lounge: "21"
+      input_number.sim_temp_bed: "19"
 
   - name: Night Minimal
     entities:
       switch.tv_switch: off
       switch.whitenoise_switch: off
       switch.kettle_switch: off
-      input_number.sim_temp_lounge: 18
-      input_number.sim_temp_bed: 17
+      input_number.sim_temp_lounge: "18"
+      input_number.sim_temp_bed: "17"
 
   - name: WFH Focus
     entities:
       switch.tv_switch: off
       switch.whitenoise_switch: off
-      input_number.sim_temp_lounge: 21
-      input_number.sim_temp_bed: 20
+      input_number.sim_temp_lounge: "21"
+      input_number.sim_temp_bed: "20"
 
   - name: Pet Calm
     entities:
       switch.tv_switch: off
-      input_number.sim_temp_lounge: 22
-      input_number.sim_temp_bed: 22
+      input_number.sim_temp_lounge: "22"
+      input_number.sim_temp_bed: "22"
+
+  - name: Away Energy Saver
+    entities:
+      switch.tv_switch: off
+      switch.kettle_switch: off
+      switch.whitenoise_switch: off
+      input_number.sim_temp_lounge: "16"
+      input_number.sim_temp_bed: "16"
 
 # ====================== AUTOMATIONS ======================
 automation:
@@ -321,8 +329,10 @@ automation:
               data: { title: "Mode: Sleep", message: "Night profile; risky loads will auto-off." }
         - conditions: "{{ is_state('input_boolean.mode_away','on') }}"
           sequence:
+            - service: scene.turn_on
+              target: { entity_id: scene.away_energy_saver }
             - service: persistent_notification.create
-              data: { title: "Mode: Away", message: "House secured; safety and energy policies active." }
+              data: { title: "Mode: Away", message: "House secured; energy saver mode active." }
 
 # C) Quiet hours -> kettle auto-off after timeout
 - alias: Safety | Quiet Hours Auto-Off (Kettle)
@@ -336,10 +346,10 @@ automation:
   condition:
     - condition: template
       value_template: >
-        {% set s = state_attr('input_datetime.quiet_start','timestamp') %}
-        {% set e = state_attr('input_datetime.quiet_end','timestamp') %}
+        {% set s = state_attr('input_datetime.quiet_start','timestamp')|float(0) %}
+        {% set e = state_attr('input_datetime.quiet_end','timestamp')|float(0) %}
         {% set nowts = now().timestamp() %}
-        {% if s and e %}
+        {% if s > 0 and e > 0 %}
           {% if s > e %}
             {# Wraps midnight: e.g., 23:00 -> 06:00 #}
             {{ nowts >= s or nowts <= e }}
@@ -367,7 +377,7 @@ automation:
       value_template: >
         {% set used = states('sensor.house_energy_today')|float(0) %}
         {% set cap  = states('input_number.daily_energy_budget_kwh')|float(1) %}
-        {{ used >= (cap * 0.8) and is_state('input_boolean.block_fun','off') }}
+        {{ cap > 0 and used >= (cap * 0.8) and is_state('input_boolean.block_fun','off') }}
   action:
     - service: input_boolean.turn_on
       target: { entity_id: input_boolean.block_fun }
@@ -375,7 +385,7 @@ automation:
       data: { title: "Energy", message: "You’ve hit 80% of today’s budget. Soft-blocking TV and other fun loads." }
 
 - alias: Energy | Enforce Fun Block
-  mode: parallel
+  mode: restart
   trigger:
     - platform: state
       entity_id: input_boolean.block_fun
@@ -481,10 +491,16 @@ automation:
               target: { entity_id: input_boolean.doorbell_muted }
             - service: persistent_notification.create
               data: { title: "Meeting", message: "DND reinforced; doorbell muted." }
+        - conditions: "{{ is_state('input_boolean.meeting_now','off') and is_state('input_boolean.overlay_wfh','off') }}"
+          sequence:
+            - service: input_boolean.turn_off
+              target: { entity_id: input_boolean.doorbell_muted }
+            - service: persistent_notification.create
+              data: { title: "Meeting", message: "Meeting ended; doorbell unmuted." }
         - conditions: []
           sequence:
             - service: persistent_notification.create
-              data: { title: "Meeting", message: "Meeting flag cleared." }
+              data: { title: "Meeting", message: "Meeting flag cleared (doorbell stays in WFH state)." }
 
 # F) Pet overlay: comfort band + bark calming + doorbell calming
 - alias: Pet | Overlay On
@@ -499,7 +515,8 @@ automation:
       data: { title: "Pet Mode", message: "Pet comfort profile active (calm ambience, bark-calming ready)." }
 
 - alias: Pet | Comfort Band Watch
-  mode: restart
+  mode: single
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id: sensor.lounge_temperature
@@ -569,14 +586,11 @@ automation:
     - condition: state
       entity_id: input_boolean.overlay_pet_home
       state: "on"
-    - condition: state
-      entity_id: input_boolean.doorbell_muted
-      state: "on"
   action:
     - service: switch.turn_on
       target: { entity_id: switch.whitenoise_switch }
     - service: persistent_notification.create
-      data: { title: "Pet Calm", message: "Doorbell muted → Calm routine (white noise) triggered." }
+      data: { title: "Pet Calm", message: "Doorbell pressed → Calm routine (white noise) triggered for pet." }
       
 # G) Door policy: Away/Sleep lock rules + Pet/Away exception
 - alias: Security | Door Policy
@@ -606,7 +620,9 @@ automation:
                 message: "Away + Pet overlay → Front locked, Back unlocked."
 
         # Away (no Pet overlay) → Lock both
-        - conditions: "{{ is_state('input_boolean.mode_away','on') }}"
+        - conditions: >
+            {{ is_state('input_boolean.mode_away','on')
+               and is_state('input_boolean.overlay_pet_home','off') }}
           sequence:
             - service: lock.lock
               target:

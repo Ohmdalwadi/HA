@@ -1,0 +1,997 @@
+# === Extended Virtual Features for Assignment ===
+# Voice Control, Weather, Calendar, Vacation Mode, Multiple Pets, Zone-based Presence
+
+input_boolean:
+  # Vacation Mode
+  mode_vacation: { name: "Mode - Vacation", icon: mdi:airplane }
+  vacation_randomize_lights: { name: "Vacation - Randomize Lights", icon: mdi:lightbulb-auto }
+  vacation_collect_packages: { name: "Vacation - Package Collected", icon: mdi:package-variant }
+
+  # Multiple Pets (2 dogs)
+  pet_max_home: { name: "Pet - Max at Home", icon: mdi:dog }
+  pet_buddy_home: { name: "Pet - Buddy at Home", icon: mdi:dog }
+  pet_max_fed: { name: "Pet - Max Fed Today", icon: mdi:food-drumstick }
+  pet_buddy_fed: { name: "Pet - Buddy Fed Today", icon: mdi:food-drumstick }
+
+  # Zone-based presence (3 zones)
+  presence_upstairs: { name: "Presence - Upstairs", icon: mdi:stairs-up }
+  presence_downstairs: { name: "Presence - Downstairs", icon: mdi:stairs-down }
+  presence_outside: { name: "Presence - Outside/Garden", icon: mdi:tree }
+
+  # Simulated mobile notification actions
+  notification_action_received: { name: "Mobile Notification - Action Received", icon: mdi:cellphone-message }
+
+input_number:
+  # Multiple Pet bark levels
+  pet_max_bark_db: { name: "Max Bark Level (dB)", min: 0, max: 100, step: 1, unit_of_measurement: "dB", icon: mdi:dog }
+  pet_buddy_bark_db: { name: "Buddy Bark Level (dB)", min: 0, max: 100, step: 1, unit_of_measurement: "dB", icon: mdi:dog }
+
+  # Weather simulation
+  sim_outside_temp: { name: "Outside Temperature", min: -20, max: 45, step: 0.5, unit_of_measurement: "°C", icon: mdi:thermometer }
+  sim_humidity: { name: "Humidity", min: 0, max: 100, step: 1, unit_of_measurement: "%", icon: mdi:water-percent }
+  sim_wind_speed: { name: "Wind Speed", min: 0, max: 100, step: 1, unit_of_measurement: "km/h", icon: mdi:weather-windy }
+  sim_rainfall: { name: "Rainfall", min: 0, max: 50, step: 0.5, unit_of_measurement: "mm", icon: mdi:weather-rainy }
+  sim_uv_index: { name: "UV Index", min: 0, max: 11, step: 1, icon: mdi:white-balance-sunny }
+
+  # Pet feeding schedule
+  pet_feeding_hour_morning: { name: "Pet Morning Feed Hour", min: 5, max: 10, step: 1, unit_of_measurement: "h", icon: mdi:clock }
+  pet_feeding_hour_evening: { name: "Pet Evening Feed Hour", min: 16, max: 21, step: 1, unit_of_measurement: "h", icon: mdi:clock }
+
+  # Vacation settings
+  vacation_days_remaining: { name: "Vacation Days Remaining", min: 0, max: 30, step: 1, unit_of_measurement: "days", icon: mdi:calendar }
+
+input_text:
+  # Voice command simulation
+  voice_command: { name: "Voice Command", max: 255, icon: mdi:microphone }
+  voice_response: { name: "Voice Response", max: 255, icon: mdi:speaker }
+
+  # Mobile notification actions
+  notification_last_action: { name: "Last Notification Action", max: 100, icon: mdi:bell }
+
+  # Weather condition (text)
+  sim_weather_condition: { name: "Weather Condition", max: 50, icon: mdi:weather-partly-cloudy }
+
+  # Calendar simulation
+  calendar_next_meeting_title: { name: "Next Meeting Title", max: 100, icon: mdi:calendar }
+  calendar_next_meeting_time: { name: "Next Meeting Time", max: 20, icon: mdi:clock }
+
+input_datetime:
+  # Calendar simulation
+  calendar_meeting_start: { name: "Sim Meeting Start", has_date: true, has_time: true }
+  calendar_meeting_end: { name: "Sim Meeting End", has_date: true, has_time: true }
+
+  # Vacation dates
+  vacation_start_date: { name: "Vacation Start", has_date: true, has_time: false }
+  vacation_end_date: { name: "Vacation End", has_date: true, has_time: false }
+
+  # Pet feeding times
+  pet_last_fed_max: { name: "Max Last Fed", has_date: true, has_time: true }
+  pet_last_fed_buddy: { name: "Buddy Last Fed", has_date: true, has_time: true }
+
+input_select:
+  # Weather preset options
+  weather_preset:
+    name: "Weather Preset"
+    options:
+      - "Sunny"
+      - "Cloudy"
+      - "Rainy"
+      - "Stormy"
+      - "Snowy"
+      - "Foggy"
+      - "Heatwave"
+      - "Custom"
+    icon: mdi:weather-partly-cloudy
+
+  # Voice command shortcuts
+  voice_command_quick:
+    name: "Quick Voice Command"
+    options:
+      - "Turn on all lights"
+      - "Turn off all lights"
+      - "Lock all doors"
+      - "Unlock all doors"
+      - "Start WFH mode"
+      - "Start vacation mode"
+      - "Activate pet mode"
+      - "Good morning"
+      - "Good night"
+      - "I'm leaving"
+      - "I'm home"
+    icon: mdi:microphone-message
+
+# === Template Sensors ===
+template:
+  - binary_sensor:
+      # Pet barking sensors (individual)
+      - name: "Max Barking"
+        device_class: sound
+        state: "{{ (states('input_number.pet_max_bark_db')|float) > 60 }}"
+        icon: mdi:dog
+
+      - name: "Buddy Barking"
+        device_class: sound
+        state: "{{ (states('input_number.pet_buddy_bark_db')|float) > 60 }}"
+        icon: mdi:dog
+
+      # Any pet barking
+      - name: "Any Pet Barking"
+        device_class: sound
+        state: >
+          {{ (states('input_number.pet_max_bark_db')|float) > 60
+             or (states('input_number.pet_buddy_bark_db')|float) > 60 }}
+        icon: mdi:dog
+
+      # Weather conditions
+      - name: "Weather Is Rainy"
+        device_class: moisture
+        state: "{{ states('input_number.sim_rainfall')|float > 1 }}"
+        icon: mdi:weather-rainy
+
+      - name: "Weather Is Windy"
+        device_class: safety
+        state: "{{ states('input_number.sim_wind_speed')|float > 30 }}"
+        icon: mdi:weather-windy
+
+      - name: "Weather Is Hot"
+        device_class: heat
+        state: "{{ states('input_number.sim_outside_temp')|float > 30 }}"
+        icon: mdi:thermometer-alert
+
+      # Calendar meeting active
+      - name: "Calendar Meeting Active"
+        device_class: occupancy
+        state: >
+          {% set now_ts = now().timestamp() %}
+          {% set start = state_attr('input_datetime.calendar_meeting_start','timestamp')|float(0) %}
+          {% set end = state_attr('input_datetime.calendar_meeting_end','timestamp')|float(0) %}
+          {{ start > 0 and end > 0 and now_ts >= start and now_ts <= end }}
+        icon: mdi:calendar-clock
+
+      # Vacation mode active
+      - name: "Vacation Active"
+        state: >
+          {% set now_date = now().date() %}
+          {% set start = states('input_datetime.vacation_start_date') %}
+          {% set end = states('input_datetime.vacation_end_date') %}
+          {% if start and end and start != 'unknown' and end != 'unknown' %}
+            {% set start_date = strptime(start, '%Y-%m-%d').date() %}
+            {% set end_date = strptime(end, '%Y-%m-%d').date() %}
+            {{ now_date >= start_date and now_date <= end_date }}
+          {% else %}
+            false
+          {% endif %}
+        icon: mdi:airplane
+
+      # Pet feeding overdue
+      - name: "Max Feeding Overdue"
+        state: >
+          {% set last_fed = state_attr('input_datetime.pet_last_fed_max','timestamp')|float(0) %}
+          {% set now_ts = now().timestamp() %}
+          {{ last_fed > 0 and (now_ts - last_fed) > 43200 }}
+        icon: mdi:alert-circle
+
+      - name: "Buddy Feeding Overdue"
+        state: >
+          {% set last_fed = state_attr('input_datetime.pet_last_fed_buddy','timestamp')|float(0) %}
+          {% set now_ts = now().timestamp() %}
+          {{ last_fed > 0 and (now_ts - last_fed) > 43200 }}
+        icon: mdi:alert-circle
+
+      # Zone occupancy
+      - name: "Someone Home"
+        device_class: occupancy
+        state: >
+          {{ is_state('input_boolean.presence_upstairs','on')
+             or is_state('input_boolean.presence_downstairs','on')
+             or is_state('input_boolean.presence_outside','on') }}
+        icon: mdi:home-account
+
+  - sensor:
+      # Display helpers
+      - name: "Current Mode Display"
+        state: >
+          {% if is_state('input_boolean.mode_vacation','on') %}Vacation
+          {% elif is_state('input_boolean.mode_home','on') %}Home
+          {% elif is_state('input_boolean.mode_away','on') %}Away
+          {% elif is_state('input_boolean.mode_sleep','on') %}Sleep
+          {% elif is_state('input_boolean.mode_guest','on') %}Guest
+          {% else %}None
+          {% endif %}
+        icon: mdi:home-circle
+
+      - name: "Active Overlays Display"
+        state: >
+          {% set overlays = [] %}
+          {% if is_state('input_boolean.overlay_wfh','on') %}
+            {% set overlays = overlays + ['WFH'] %}
+          {% endif %}
+          {% if is_state('input_boolean.overlay_pet_home','on') %}
+            {% set overlays = overlays + ['Pet'] %}
+          {% endif %}
+          {% if overlays|length > 0 %}
+            {{ overlays|join(', ') }}
+          {% else %}
+            None
+          {% endif %}
+        icon: mdi:layers
+
+      # Weather sensors
+      - name: "Outside Temperature"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: "{{ states('input_number.sim_outside_temp') }}"
+        icon: mdi:thermometer
+
+      - name: "Outside Humidity"
+        unit_of_measurement: "%"
+        device_class: humidity
+        state: "{{ states('input_number.sim_humidity') }}"
+        icon: mdi:water-percent
+
+      - name: "Wind Speed"
+        unit_of_measurement: "km/h"
+        device_class: wind_speed
+        state: "{{ states('input_number.sim_wind_speed') }}"
+        icon: mdi:weather-windy
+
+      - name: "Rainfall"
+        unit_of_measurement: "mm"
+        state: "{{ states('input_number.sim_rainfall') }}"
+        icon: mdi:weather-rainy
+
+      - name: "UV Index"
+        unit_of_measurement: "UV"
+        state: "{{ states('input_number.sim_uv_index') }}"
+        icon: mdi:white-balance-sunny
+
+      - name: "Weather Condition"
+        state: "{{ states('input_text.sim_weather_condition') }}"
+        icon: mdi:weather-partly-cloudy
+
+      # Pet bark levels
+      - name: "Max Bark Level"
+        unit_of_measurement: "dB"
+        state: "{{ states('input_number.pet_max_bark_db') }}"
+        icon: mdi:dog
+
+      - name: "Buddy Bark Level"
+        unit_of_measurement: "dB"
+        state: "{{ states('input_number.pet_buddy_bark_db') }}"
+        icon: mdi:dog
+
+      # Pet status
+      - name: "Pets At Home Count"
+        unit_of_measurement: "pets"
+        state: >
+          {{ [is_state('input_boolean.pet_max_home','on'),
+              is_state('input_boolean.pet_buddy_home','on')]|select('eq',true)|list|count }}
+        icon: mdi:dog
+
+      # Current zone
+      - name: "Current Presence Zone"
+        state: >
+          {% if is_state('input_boolean.presence_upstairs','on') %}Upstairs
+          {% elif is_state('input_boolean.presence_downstairs','on') %}Downstairs
+          {% elif is_state('input_boolean.presence_outside','on') %}Outside
+          {% else %}Away
+          {% endif %}
+        icon: mdi:map-marker
+
+      # Feels like temperature (adjusted for humidity/wind)
+      - name: "Feels Like Temperature"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {% set temp = states('input_number.sim_outside_temp')|float(20) %}
+          {% set humidity = states('input_number.sim_humidity')|float(50) %}
+          {% set wind = states('input_number.sim_wind_speed')|float(0) %}
+          {% set wind_chill = temp - (wind * 0.1) if temp < 10 and wind > 10 else temp %}
+          {% set heat_index = temp + (humidity * 0.05) if temp > 25 and humidity > 60 else temp %}
+          {% if temp < 10 %}
+            {{ wind_chill|round(1) }}
+          {% elif temp > 25 %}
+            {{ heat_index|round(1) }}
+          {% else %}
+            {{ temp|round(1) }}
+          {% endif %}
+        icon: mdi:thermometer
+
+# === Automations for Extended Features ===
+automation:
+  # ========== VOICE CONTROL SIMULATION ==========
+  - alias: "Voice | Process Command"
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id: input_text.voice_command
+      - platform: state
+        entity_id: input_select.voice_command_quick
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown','unavailable',''] }}
+    action:
+      - variables:
+          command: >
+            {% if trigger.entity_id == 'input_select.voice_command_quick' %}
+              {{ states('input_select.voice_command_quick')|lower }}
+            {% else %}
+              {{ states('input_text.voice_command')|lower }}
+            {% endif %}
+      - choose:
+          # Lights
+          - conditions: "{{ 'turn on all lights' in command or 'lights on' in command }}"
+            sequence:
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Turning on all lights"
+              - service: persistent_notification.create
+                data: { title: "Voice Control", message: "🎤 Turning on all lights" }
+
+          - conditions: "{{ 'turn off all lights' in command or 'lights off' in command }}"
+            sequence:
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Turning off all lights"
+              - service: persistent_notification.create
+                data: { title: "Voice Control", message: "🎤 Turning off all lights" }
+
+          # Doors
+          - conditions: "{{ 'lock all doors' in command or 'lock doors' in command }}"
+            sequence:
+              - service: lock.lock
+                target:
+                  entity_id:
+                    - lock.front_door_sim
+                    - lock.back_door_sim
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "All doors locked"
+              - service: persistent_notification.create
+                data: { title: "Voice Control", message: "🔒 All doors locked" }
+
+          - conditions: "{{ 'unlock all doors' in command or 'unlock doors' in command }}"
+            sequence:
+              - service: lock.unlock
+                target:
+                  entity_id:
+                    - lock.front_door_sim
+                    - lock.back_door_sim
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "All doors unlocked"
+              - service: persistent_notification.create
+                data: { title: "Voice Control", message: "🔓 All doors unlocked" }
+
+          # Modes
+          - conditions: "{{ 'start wfh' in command or 'work from home' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.overlay_wfh }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Work from home mode activated"
+
+          - conditions: "{{ 'vacation mode' in command or 'start vacation' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.mode_vacation }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Vacation mode activated. Have a great trip!"
+
+          - conditions: "{{ 'pet mode' in command or 'activate pet' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.overlay_pet_home }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Pet mode activated"
+
+          # Routines
+          - conditions: "{{ 'good morning' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.mode_home }
+              - service: scene.turn_on
+                target: { entity_id: scene.home_bright }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Good morning! Starting your day."
+
+          - conditions: "{{ 'good night' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.mode_sleep }
+              - service: scene.turn_on
+                target: { entity_id: scene.night_minimal }
+              - service: lock.lock
+                target:
+                  entity_id:
+                    - lock.front_door_sim
+                    - lock.back_door_sim
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Good night! Doors locked, sleep mode activated."
+
+          - conditions: "{{ 'leaving' in command or 'goodbye' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.mode_away }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Goodbye! Setting away mode and securing home."
+
+          - conditions: "{{ 'home' in command or 'hello' in command }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target: { entity_id: input_boolean.mode_home }
+              - service: input_text.set_value
+                data:
+                  entity_id: input_text.voice_response
+                  value: "Welcome home!"
+
+        default:
+          - service: input_text.set_value
+            data:
+              entity_id: input_text.voice_response
+              value: "Sorry, I didn't understand that command"
+
+  # ========== WEATHER-BASED AUTOMATIONS ==========
+  - alias: "Weather | Apply Preset"
+    trigger:
+      - platform: state
+        entity_id: input_select.weather_preset
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state != 'Custom' }}"
+    action:
+      - choose:
+          - conditions: "{{ trigger.to_state.state == 'Sunny' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 25 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 45 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 10 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 0 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 8 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Sunny" }
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Preset Applied"
+                  message: "☀️ Sunny weather: 25°C, 45% humidity, UV Index 8"
+
+          - conditions: "{{ trigger.to_state.state == 'Cloudy' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 18 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 65 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 15 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 0 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 3 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Cloudy" }
+
+          - conditions: "{{ trigger.to_state.state == 'Rainy' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 15 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 85 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 20 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 10 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 1 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Rainy" }
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Preset Applied"
+                  message: "🌧️ Rainy weather: 15°C, 10mm rainfall, 20 km/h wind"
+
+          - conditions: "{{ trigger.to_state.state == 'Stormy' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 12 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 90 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 50 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 25 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 0 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Stormy" }
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Preset Applied"
+                  message: "⛈️ STORM: 12°C, 25mm heavy rain, 50 km/h winds!"
+
+          - conditions: "{{ trigger.to_state.state == 'Snowy' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: -2 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 75 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 25 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 5 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 1 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Snowy" }
+
+          - conditions: "{{ trigger.to_state.state == 'Foggy' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 10 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 95 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 5 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 0 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 0 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Foggy" }
+
+          - conditions: "{{ trigger.to_state.state == 'Heatwave' }}"
+            sequence:
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_outside_temp, value: 38 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_humidity, value: 30 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_wind_speed, value: 8 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_rainfall, value: 0 }
+              - service: input_number.set_value
+                data: { entity_id: input_number.sim_uv_index, value: 11 }
+              - service: input_text.set_value
+                data: { entity_id: input_text.sim_weather_condition, value: "Heatwave" }
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Preset Applied"
+                  message: "🔥 HEATWAVE: 38°C, UV Index 11 (Extreme)"
+
+  - alias: "Weather | Temperature Adjustments"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_number.sim_outside_temp
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_home
+        state: "on"
+    action:
+      - choose:
+          # Hot weather - cool house down
+          - conditions: "{{ states('binary_sensor.weather_is_hot') == 'on' }}"
+            sequence:
+              - service: input_number.set_value
+                data:
+                  entity_id: input_number.sim_temp_lounge
+                  value: 22
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Response"
+                  message: "Hot weather detected. Adjusting indoor temperature to 22°C."
+
+          # Cold weather - warm house up
+          - conditions: "{{ states('input_number.sim_outside_temp')|float < 10 }}"
+            sequence:
+              - service: input_number.set_value
+                data:
+                  entity_id: input_number.sim_temp_lounge
+                  value: 23
+              - service: persistent_notification.create
+                data:
+                  title: "Weather Response"
+                  message: "Cold weather detected. Warming house to 23°C."
+
+  - alias: "Weather | Rainy Day Response"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.weather_is_rainy
+        to: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Weather Alert"
+          message: "🌧️ Rain detected. Ensure all windows are closed."
+
+  - alias: "Weather | High Wind Alert"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.weather_is_windy
+        to: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Weather Alert"
+          message: "💨 High winds detected ({{ states('sensor.wind_speed') }} km/h). Secure outdoor items."
+
+  # ========== CALENDAR/MEETING INTEGRATION ==========
+  - alias: "Calendar | Auto-Start Meeting Mode"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.calendar_meeting_active
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.overlay_wfh
+        state: "on"
+    action:
+      - service: input_boolean.turn_on
+        target: { entity_id: input_boolean.meeting_now }
+      - service: persistent_notification.create
+        data:
+          title: "Calendar"
+          message: "📅 Meeting '{{ states('input_text.calendar_next_meeting_title') }}' starting now!"
+
+  - alias: "Calendar | Auto-End Meeting Mode"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.calendar_meeting_active
+        to: "off"
+    condition:
+      - condition: state
+        entity_id: input_boolean.meeting_now
+        state: "on"
+    action:
+      - service: input_boolean.turn_off
+        target: { entity_id: input_boolean.meeting_now }
+      - service: persistent_notification.create
+        data:
+          title: "Calendar"
+          message: "✅ Meeting ended. Back to normal WFH mode."
+
+  - alias: "Calendar | 5-Minute Meeting Warning"
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >
+          {% set now_ts = now().timestamp() %}
+          {% set start = state_attr('input_datetime.calendar_meeting_start','timestamp')|float(0) %}
+          {{ start > 0 and (start - now_ts) <= 300 and (start - now_ts) > 0 }}
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Calendar Reminder"
+          message: "⏰ Meeting '{{ states('input_text.calendar_next_meeting_title') }}' starting in 5 minutes!"
+
+  # ========== VACATION MODE ==========
+  - alias: "Vacation | Mode Activated"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.mode_vacation
+        to: "on"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.vacation_randomize_lights
+      - service: lock.lock
+        target:
+          entity_id:
+            - lock.front_door_sim
+            - lock.back_door_sim
+      - service: scene.turn_on
+        target: { entity_id: scene.away_energy_saver }
+      - service: persistent_notification.create
+        data:
+          title: "Vacation Mode"
+          message: "✈️ Vacation mode activated! Lights will randomize, doors locked, energy saver mode on."
+
+  - alias: "Vacation | Mode Deactivated"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.mode_vacation
+        to: "off"
+    action:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vacation_randomize_lights
+      - service: persistent_notification.create
+        data:
+          title: "Vacation Mode"
+          message: "🏠 Welcome back! Vacation mode deactivated."
+
+  - alias: "Vacation | Daily Check-in"
+    trigger:
+      - platform: time
+        at: "12:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_vacation
+        state: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Vacation Check-in"
+          message: "🏖️ Day {{ states('input_number.vacation_days_remaining')|int }} of vacation. All systems normal."
+
+  - alias: "Vacation | Package Detection"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.sim_doorbell
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_vacation
+        state: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Vacation Alert"
+          message: "📦 Doorbell activity detected while on vacation. Possible package delivery."
+
+  # ========== MULTIPLE PETS ==========
+  - alias: "Pet | Max Barking Detected"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.max_barking
+        to: "on"
+        for: "00:00:10"
+    condition:
+      - condition: state
+        entity_id: input_boolean.pet_max_home
+        state: "on"
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.whitenoise_switch }
+      - service: persistent_notification.create
+        data:
+          title: "Pet Alert - Max"
+          message: "🐕 Max is barking ({{ states('sensor.max_bark_level') }} dB) → White noise enabled."
+
+  - alias: "Pet | Buddy Barking Detected"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.buddy_barking
+        to: "on"
+        for: "00:00:10"
+    condition:
+      - condition: state
+        entity_id: input_boolean.pet_buddy_home
+        state: "on"
+    action:
+      - service: switch.turn_on
+        target: { entity_id: switch.whitenoise_switch }
+      - service: persistent_notification.create
+        data:
+          title: "Pet Alert - Buddy"
+          message: "🐕 Buddy is barking ({{ states('sensor.buddy_bark_level') }} dB) → White noise enabled."
+
+  - alias: "Pet | Feeding Reminder - Morning"
+    trigger:
+      - platform: template
+        value_template: >
+          {{ now().hour == states('input_number.pet_feeding_hour_morning')|int
+             and now().minute == 0 }}
+    condition:
+      - condition: template
+        value_template: >
+          {{ is_state('input_boolean.pet_max_home','on')
+             or is_state('input_boolean.pet_buddy_home','on') }}
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Pet Feeding Reminder"
+          message: >
+            🍽️ Morning feeding time!
+            {% if is_state('input_boolean.pet_max_home','on') %}Max {% endif %}
+            {% if is_state('input_boolean.pet_buddy_home','on') %}Buddy {% endif %}
+            need breakfast.
+
+  - alias: "Pet | Feeding Reminder - Evening"
+    trigger:
+      - platform: template
+        value_template: >
+          {{ now().hour == states('input_number.pet_feeding_hour_evening')|int
+             and now().minute == 0 }}
+    condition:
+      - condition: template
+        value_template: >
+          {{ is_state('input_boolean.pet_max_home','on')
+             or is_state('input_boolean.pet_buddy_home','on') }}
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Pet Feeding Reminder"
+          message: >
+            🍽️ Evening feeding time!
+            {% if is_state('input_boolean.pet_max_home','on') %}Max {% endif %}
+            {% if is_state('input_boolean.pet_buddy_home','on') %}Buddy {% endif %}
+            need dinner.
+
+  - alias: "Pet | Feeding Overdue Alert - Max"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.max_feeding_overdue
+        to: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Pet Alert - Max"
+          message: "⚠️ Max hasn't been fed in over 12 hours! Please feed immediately."
+
+  - alias: "Pet | Feeding Overdue Alert - Buddy"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.buddy_feeding_overdue
+        to: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Pet Alert - Buddy"
+          message: "⚠️ Buddy hasn't been fed in over 12 hours! Please feed immediately."
+
+  # ========== ZONE-BASED PRESENCE ==========
+  - alias: "Zone | Mutual Exclusion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.presence_upstairs
+          - input_boolean.presence_downstairs
+          - input_boolean.presence_outside
+        to: "on"
+    action:
+      - choose:
+          - conditions: "{{ trigger.entity_id == 'input_boolean.presence_upstairs' }}"
+            sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id:
+                    - input_boolean.presence_downstairs
+                    - input_boolean.presence_outside
+              - service: persistent_notification.create
+                data:
+                  title: "Zone Change"
+                  message: "🏠 Moved to Upstairs zone"
+
+          - conditions: "{{ trigger.entity_id == 'input_boolean.presence_downstairs' }}"
+            sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id:
+                    - input_boolean.presence_upstairs
+                    - input_boolean.presence_outside
+              - service: persistent_notification.create
+                data:
+                  title: "Zone Change"
+                  message: "🏠 Moved to Downstairs zone"
+
+          - conditions: "{{ trigger.entity_id == 'input_boolean.presence_outside' }}"
+            sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id:
+                    - input_boolean.presence_upstairs
+                    - input_boolean.presence_downstairs
+              - service: persistent_notification.create
+                data:
+                  title: "Zone Change"
+                  message: "🌳 Moved to Outside zone"
+
+  - alias: "Zone | Auto Mode from Presence"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.someone_home
+        to: "off"
+        for: "00:10:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_vacation
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        target: { entity_id: input_boolean.mode_away }
+      - service: persistent_notification.create
+        data:
+          title: "Presence Detection"
+          message: "👋 No one detected in any zone for 10 minutes. Switching to Away mode."
+
+  - alias: "Zone | Return Home Detection"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.someone_home
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.mode_away
+        state: "on"
+    action:
+      - service: input_boolean.turn_on
+        target: { entity_id: input_boolean.mode_home }
+      - service: persistent_notification.create
+        data:
+          title: "Presence Detection"
+          message: "🏠 Welcome home! Detected in {{ states('sensor.current_presence_zone') }}."
+
+  - alias: "Zone | Outside Zone Alert (Evening)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.presence_outside
+        to: "on"
+    condition:
+      - condition: time
+        after: "22:00:00"
+        before: "06:00:00"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Security Alert"
+          message: "🌙 Presence detected outside during nighttime hours."
+
+  # ========== MOBILE NOTIFICATION SIMULATION ==========
+  - alias: "Notification | Simulate Mobile Action"
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id: input_text.notification_last_action
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in ['unknown','unavailable',''] }}"
+    action:
+      - service: input_boolean.turn_on
+        target: { entity_id: input_boolean.notification_action_received }
+      - delay: "00:00:01"
+      - service: input_boolean.turn_off
+        target: { entity_id: input_boolean.notification_action_received }
+      - choose:
+          - conditions: "{{ 'dismiss' in states('input_text.notification_last_action')|lower }}"
+            sequence:
+              - service: persistent_notification.dismiss
+                data:
+                  notification_id: "{{ states('input_text.notification_last_action').split(':')[-1] }}"
+
+          - conditions: "{{ 'snooze' in states('input_text.notification_last_action')|lower }}"
+            sequence:
+              - service: persistent_notification.create
+                data:
+                  title: "Notification Snoozed"
+                  message: "⏰ Notification snoozed for 10 minutes"
+
+          - conditions: "{{ 'action' in states('input_text.notification_last_action')|lower }}"
+            sequence:
+              - service: persistent_notification.create
+                data:
+                  title: "Action Executed"
+                  message: "✅ Mobile notification action executed: {{ states('input_text.notification_last_action') }}"
